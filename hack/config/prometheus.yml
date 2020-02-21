@@ -1,0 +1,65 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - alertmanager:9093
+
+rule_files:
+  - "prometheus.rules.yml"
+
+scrape_configs:
+  - job_name: prometheus
+    scrape_interval: 5s
+    scrape_timeout: 2s
+    honor_labels: true
+    static_configs:
+      - targets: ['prometheus:9090']
+
+  - job_name: services
+    scrape_interval: 5s
+    scrape_timeout: 2s
+    honor_labels: true
+    static_configs:
+      - targets: ['cdn.eu:9100']
+        labels:
+          service_id: cdn.eu
+      - targets: ['cdn.us:9100']
+        labels:
+          service_id: cdn.us
+      - targets: ['cdn.sea:9100']
+        labels:
+          service_id: cdn.sea
+      - targets: ['edge.svc:9100']
+        labels:
+          service_id: edge.svc
+      - targets: ['frontend.svc:9100']
+        labels:
+          service_id: frontend.svc
+      - targets: ['orders.svc:9100']
+        labels:
+          service_id: orders.svc
+      - targets: ['catalog.svc:9100']
+        labels:
+          service_id: catalog.svc
+      - targets: ['cart.svc:9100']
+        labels:
+          service_id: cart.svc
+      - targets: ['cart-db.svc:9100']
+        labels:
+          service_id: cart-db.svc
+      - targets: ['checkout.svc:9100']
+        labels:
+          service_id: checkout.svc
+      - targets: ['shipping-portal.svc:9100']
+        labels:
+          service_id: shipping-portal.svc
+      - targets: ['payment.svc:9100']
+        labels:
+          service_id: payment.svc
+      - targets: ['rabbitmq.svc:9100']
+        labels:
+          service_id: rabbitmq.svc

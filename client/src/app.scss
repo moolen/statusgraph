@@ -1,0 +1,118 @@
+/*
+  Copyright(c) 2018 Uber Technologies, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+html, body {
+  font-family: sans-serif;
+  font-size: 12px;
+  margin: 0px;
+}
+
+button {
+  margin-right: 10px;
+}
+
+#graph{
+}
+
+.graph {
+  background: whitesmoke;
+}
+
+$green: hsl(120, 60%, 39%);
+$red: hsl(9, 100%, 64%);
+
+.view-wrapper{
+  height: auto;
+  position: absolute;
+  top: 50px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  .node {
+    .shape>use.node {
+      fill: $green;
+      stroke: #000;
+      &.has-alert{
+        color: white;
+        fill: $red;
+      }
+      &.selected{
+        fill: rgb(123, 173, 214);
+        stroke: rgb(66, 92, 114);
+      }
+    }
+    .node-text {
+      fill: #fff;
+    }
+  }
+
+  .cluster{
+    &.has-alert{
+      .cluster-shape{
+        fill: lighten($red, 20%)
+      }
+    }
+  }
+
+  .edge{
+    stroke: #333333;
+    &.selected{
+      stroke: #7badd6;
+    }
+  }
+
+  .cluster-shape{
+    fill: antiquewhite;
+    stroke: #aaa;
+    stroke-dasharray: 10;
+  }
+  .arrow{
+    fill: #333333;
+  }
+}
+
+.total-nodes {
+  margin-right: 10px;
+}
+
+.app-header {
+  border-bottom: 1px solid black;
+  background: #f9f9f9;
+
+  > nav {
+    height: 25px;
+    > a {
+      border-right: 1px solid black;
+      line-height: 25px;
+      min-width: 150px;
+      padding: 10px;
+
+      &.active {
+        background: #333;
+        color: white;
+      }
+    }
+  }
+}
+
+.graph-container {
+  position: relative;
+  flex: 1;
+}
+
+@import "form.scss";
+@import "titlebar.scss";

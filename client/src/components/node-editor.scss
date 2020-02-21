@@ -1,0 +1,41 @@
+
+.node-editor {
+  position: absolute;
+  z-index: 1;
+  display: none;
+  padding: 20px 30px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  box-shadow: 1px 1px 5px #cccccc;
+  &.enabled{
+    display: block;
+  }
+}
+
+.left-arrow {
+  display: inline-block;
+}
+.left-arrow:before {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 15px;
+  right: 100%;
+  width: 0;
+  height: 0;
+  border: 10px solid transparent;
+  border-right-color:#bbb;
+}
+
+.left-arrow:after {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 16px;
+  right: 100%;
+  width: 0;
+  height: 0;
+  border: 9px solid transparent;
+  border-right-color: white;
+}

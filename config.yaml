@@ -1,0 +1,31 @@
+upstream:
+  prometheus:
+    url: http://localhost:9090
+  alertmanager:
+    url: http://localhost:9093
+  servicegraph:
+    url: http://localhost:9090
+
+mapping:
+  # this defines how we select alerts to display
+  # use a `labelSelector` to filter
+  # and `map` to specify the lookup key in the alert struct
+  alerts:
+    labelSelector:
+      - severity: "critical"
+      - severity: "warning"
+        important: "true"
+    map:
+      label: "service_id"
+
+  metrics:
+    # (for now) a single use-case is supported:
+    #   we have a metric "availability:5m" with label service_id
+    #   and we want to map the label values to a node in the graph
+    map:
+      - metric: "tcp:availability:5m"
+        label: "service_id"
+      - metric: "dns:availability:5m"
+        label: "service_id"
+      - metric: "http:error:rate:5m"
+        label: "service_id"
