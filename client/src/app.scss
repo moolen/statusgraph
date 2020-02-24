@@ -31,8 +31,11 @@ button {
   background: whitesmoke;
 }
 
-$green: hsl(120, 60%, 39%);
-$red: hsl(9, 100%, 64%);
+$green: hsl(120, 60%, 60%);
+$yellow: hsl(50, 100%, 70%);
+$red: hsl(9, 100%, 70%);
+$blue: hsl(207, 60%, 80%);
+
 
 .view-wrapper{
   height: auto;
@@ -44,19 +47,20 @@ $red: hsl(9, 100%, 64%);
 
   .node {
     .shape>use.node {
-      fill: $green;
-      stroke: #000;
+      &.is-ok {
+        fill: $green;
+        stroke: #000;
+      }
+      &.has-warning{
+        fill: $yellow;
+      }
       &.has-alert{
-        color: white;
         fill: $red;
       }
       &.selected{
-        fill: rgb(123, 173, 214);
-        stroke: rgb(66, 92, 114);
+        fill: $blue;
+        stroke: darken($blue, 20%);
       }
-    }
-    .node-text {
-      fill: #fff;
     }
   }
 
