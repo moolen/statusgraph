@@ -9,6 +9,7 @@ import './app.scss';
 class App extends React.Component {
   state = {
     alerts: [],
+    metrics: {},
   };
 
   constructor(props) {
@@ -23,10 +24,15 @@ class App extends React.Component {
       .then(json => {
         return this.setState({ alerts: json });
       });
+    fetch('http://localhost:8000/api/metrics')
+      .then(res => res.json())
+      .then(json => {
+        return this.setState({ metrics: json });
+      });
   }
 
   render() {
-    const { alerts } = this.state;
+    const { alerts, metrics } = this.state;
 
     return (
       <Router>
@@ -34,7 +40,7 @@ class App extends React.Component {
           <Route
             exact={true}
             path="/"
-            render={() => <Graph alerts={alerts} />}
+            render={() => <Graph alerts={alerts} metrics={metrics} />}
           />
         </div>
       </Router>
