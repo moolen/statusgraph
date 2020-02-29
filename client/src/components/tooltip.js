@@ -19,11 +19,23 @@ class Tooltip extends React.Component {
   }
 
   render() {
-    const alerts = this.getMatchingAlerts();
+    let alerts = this.getMatchingAlerts();
+    const metrics = this.props.metrics;
     const id = this.props.node ? this.props.node.id : '';
+    const sid = this.props.node ? this.props.node.service_id : '';
     const el = document.getElementById(`node-${id}`);
+    let viewMetrics = [];
 
-    if (!el || alerts.length == 0) {
+    if (metrics && metrics.metrics && metrics.metrics[sid]) {
+      viewMetrics = Object.keys(metrics.metrics[sid]).map(metric => {
+        return {
+          name: metric,
+          value: metrics.metrics[sid][metric],
+        };
+      });
+    }
+
+    if (!el || (alerts.length == 0 && viewMetrics.length == 0)) {
       this.props.container.classList.remove('visible');
 
       return <div id="tooltip" className="empty" />;
@@ -34,6 +46,13 @@ class Tooltip extends React.Component {
       el.getAttribute('transform')
     );
 
+    // remove certain labels
+    alerts = alerts.map(x => {
+      delete x.service_id;
+      delete x.alert_name;
+
+      return x;
+    });
     const bbox = el.getBBox();
 
     this.props.container.setAttribute('x', bbox.width / 2);
@@ -59,6 +78,11 @@ class Tooltip extends React.Component {
                     );
                   })}
                 </div>
+              </li>
+            ))}
+            {viewMetrics.map(metric => (
+              <li key={metric.name}>
+                {metric.name} : {metric.value}
               </li>
             ))}
           </ul>
