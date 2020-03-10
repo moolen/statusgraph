@@ -62,6 +62,16 @@ $blue: hsl(207, 60%, 80%);
         stroke: darken($blue, 20%);
       }
     }
+
+    .node-text {
+      &.selected{
+        tspan {
+          fill: #000;
+          stroke: none;
+        }
+      }
+    }
+
   }
 
   .cluster{
