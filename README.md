@@ -10,7 +10,7 @@ Additionally, you can map metrics
 
 Alert Example:
 
-```
+```yaml
 - alert: service_down
     expr: up == 0
     labels:
