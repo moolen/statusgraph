@@ -26,9 +26,9 @@ mapping:
   metrics:
     queries:
       # just as an example
-      - name: CPU
+      - name: cpu
         query: sum(rate(node_cpu_seconds_total[1m])) by (service_id)
         service_label: service_id
-      - name: CPU
-        query: sum(rate(node_cpu_seconds_total[1m])) by (service_id)
+      - name: cpu wait
+        query: sum(rate(node_pressure_cpu_waiting_seconds_total[1m])) by (service_id) * 100
         service_label: service_id
