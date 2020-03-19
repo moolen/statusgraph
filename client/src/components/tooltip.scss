@@ -1,0 +1,46 @@
+.tooltip-container{
+    display: none;
+    &.visible{
+        display: block;
+    }
+}
+
+.tooltip-wrapper{
+    padding: 0 0 0 10px;
+}
+
+#tooltip{
+    display: none;
+    position: absolute;
+    width: 320px;
+    max-height: 280px;
+    padding: 15px 10px;
+    z-index: 1;
+
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    box-shadow: 1px 1px 5px #cccccc;
+    &.visible{
+        display: block;
+    }
+
+    ul{
+        overflow-y: auto;
+        margin: 0;
+        padding: 0;
+        li{
+            list-style: none;
+        }
+    }
+    .label-list{
+        display: flex;
+        padding: 5px;
+        flex-wrap: wrap;
+        .label-item{
+            padding: 2px 4px;
+            margin: 2px;
+            background: burlywood;
+        }
+    }
+}

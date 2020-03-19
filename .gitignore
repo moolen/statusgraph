@@ -1,0 +1,5 @@
+hack/data
+client/node_modules
+client/dist
+data
+_react_example_graph

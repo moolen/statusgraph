@@ -1,0 +1,69 @@
+version: '3.1'
+
+services:
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./config:/prometheus
+      - ./data/prometheus:/data
+    command:
+      - '--config.file=/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/data'
+    ports:
+      - 9090:9090
+    depends_on:
+      - alertmanager
+    restart: always
+
+  alertmanager:
+    image: prom/alertmanager
+    volumes:
+      - ./config:/prometheus
+      - ./data/alertmanager:/data
+    command:
+      - '--config.file=/prometheus/alertmanager.yml'
+      - '--storage.path=/data'
+    ports:
+      - 9093:9093
+
+  # a bunch of test server
+  cdn.eu:
+    image: prom/node-exporter
+    restart: always
+  cdn.us:
+    image: prom/node-exporter
+    restart: always
+  cdn.sea:
+    image: prom/node-exporter
+    restart: always
+  edge.svc:
+    image: prom/node-exporter
+    restart: always
+  frontend.svc:
+    image: prom/node-exporter
+    restart: always
+  # comment out to trigger alert
+  #orders.svc:
+  #  image: prom/node-exporter
+  #  restart: always
+  catalog.svc:
+    image: prom/node-exporter
+    restart: always
+  cart.svc:
+    image: prom/node-exporter
+    restart: always
+  cart-db.svc:
+    image: prom/node-exporter
+    restart: always
+  checkout.svc:
+    image: prom/node-exporter
+    restart: always
+  shipping-portal.svc:
+    image: prom/node-exporter
+    restart: always
+  payment.svc:
+    image: prom/node-exporter
+    restart: always
+  rabbitmq.svc:
+    image: prom/node-exporter
+    restart: always
