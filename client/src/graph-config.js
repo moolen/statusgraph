@@ -13,6 +13,7 @@ export const DIAMOND_TYPE = 'diamond';
 export const RECT_TYPE = 'rect';
 export const REGULAR_EDGE_TYPE = 'regular';
 export const ACTOR_TYPE = 'actor';
+export const DATABASE_TYPE = 'database';
 export const CLUSTER_TYPE = 'cluster';
 
 export const nodeTypes = [
@@ -22,6 +23,7 @@ export const nodeTypes = [
   RECT_TYPE,
   ACTOR_TYPE,
   CLUSTER_TYPE,
+  DATABASE_TYPE,
 ];
 export const edgeTypes = [REGULAR_EDGE_TYPE];
 
@@ -40,6 +42,25 @@ const EmptyShape = (
 const DiamondShape = (
   <symbol viewBox="-27 0 154 154" id="diamond" width="154" height="154">
     <rect transform="translate(50) rotate(45)" width="109" height="109" />
+  </symbol>
+);
+
+const DatabaseShape = (
+  <symbol viewBox="0 0 84 60" id="database" width="84" height="60">
+    <g>
+      <rect
+        width="84"
+        height="60"
+        fill="transparent"
+        stroke="#333"
+        strokeDasharray="5"
+      />
+      <path
+        transform="translate(30, 12)"
+        fill="black"
+        d="M 22 18.055v2.458c0 1.925-4.655 3.487-10 3.487-5.344 0-10-1.562-10-3.487v-2.458c2.418 1.738 7.005 2.256 10 2.256 3.006 0 7.588-.523 10-2.256zm-10-3.409c-3.006 0-7.588-.523-10-2.256v2.434c0 1.926 4.656 3.487 10 3.487 5.345 0 10-1.562 10-3.487v-2.434c-2.418 1.738-7.005 2.256-10 2.256zm0-14.646c-5.344 0-10 1.562-10 3.488s4.656 3.487 10 3.487c5.345 0 10-1.562 10-3.487 0-1.926-4.655-3.488-10-3.488zm0 8.975c-3.006 0-7.588-.523-10-2.256v2.44c0 1.926 4.656 3.487 10 3.487 5.345 0 10-1.562 10-3.487v-2.44c-2.418 1.738-7.005 2.256-10 2.256z"
+      />
+    </g>
   </symbol>
 );
 
@@ -115,6 +136,12 @@ export default {
     poly: {
       shape: PolyShape,
       shapeId: '#poly',
+      constructor: Node,
+    },
+    database: {
+      shape: DatabaseShape,
+      shapeId: '#database',
+      textOffset: 20,
       constructor: Node,
     },
     actor: {
