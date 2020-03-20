@@ -18,14 +18,17 @@ mapping:
     map:
       label: "service_id"
 
+  # this helps us to find all existing services by fetching the label values
+  # reference: https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values
+  service_labels:
+    - 'service_id'
+
   metrics:
-    # (for now) a single use-case is supported:
-    #   we have a metric "availability:5m" with label service_id
-    #   and we want to map the label values to a node in the graph
-    map:
-      - metric: "tcp:availability:5m"
-        label: "service_id"
-      - metric: "dns:availability:5m"
-        label: "service_id"
-      - metric: "http:error:rate:5m"
-        label: "service_id"
+    queries:
+      # just as an example
+      - name: CPU
+        query: sum(rate(node_cpu_seconds_total[1m])) by (service_id)
+        service_label: service_id
+      - name: CPU
+        query: sum(rate(node_cpu_seconds_total[1m])) by (service_id)
+        service_label: service_id
