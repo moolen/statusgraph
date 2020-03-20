@@ -285,6 +285,9 @@ class Graph extends React.Component {
       selectedStage: e.target.value,
       graph: stage,
     });
+    setTimeout(() => {
+      this.GraphView.handleZoomToFit();
+    }, 50);
   }
 
   onSelectEdge = viewEdge => {
