@@ -155,6 +155,13 @@ class Graph extends React.Component {
     });
   }
 
+  // Helper to find the index of a given node
+  getNodeIndexById(id) {
+    return this.state.graph.nodes.findIndex(node => {
+      return node[NODE_KEY] === id;
+    });
+  }
+
   // Helper to find the index of a given edge
   getEdgeIndex(searchEdge) {
     return this.state.graph.edges.findIndex(edge => {
@@ -178,11 +185,25 @@ class Graph extends React.Component {
     const graph = this.state.graph;
     const i = this.getNodeIndex(viewNode);
 
+    // change other nodes aswell
+    if (viewNode.type == 'cluster') {
+      viewNode.children.forEach(c => {
+        const i = this.getNodeIndexById(c);
+        const node = graph.nodes[i];
+
+        node.x += viewNode.dx;
+        node.y += viewNode.dy;
+        graph.nodes[i] = node;
+      });
+    }
+
     graph.nodes[i] = viewNode;
     graph.nodes = [...graph.nodes];
     this.setState({
       graph: graph,
     });
+
+    this.GraphView.renderNodes();
   };
 
   onSelectNode = viewNode => {
