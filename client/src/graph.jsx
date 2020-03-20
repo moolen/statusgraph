@@ -418,6 +418,7 @@ class Graph extends React.Component {
             }
             node={this.state.hoveredNode}
             alerts={this.props.alerts}
+            metrics={this.props.metrics}
           />
         </div>,
         this.tooltipContainer
@@ -449,21 +450,29 @@ class Graph extends React.Component {
     const { edges } = this.state.graph;
     let { nodes } = this.state.graph;
     const alerts = this.props.alerts || [];
+    const metrics = this.props.metrics || [];
     const { NodeTypes, NodeSubtypes, EdgeTypes } = GraphConfig;
 
     // add extra class names to nodes which have an alert
     nodes = [
-      ...nodes.map(node => {
-        node.extra_classes = node.extra_classes || [];
+      ...nodes
+        .map(node => {
+          node.extra_classes = node.extra_classes || [];
 
-        if (this.nodeHasAlert(node, alerts)) {
-          node.extra_classes = ['has-alert'];
-        } else {
-          node.extra_classes = node.extra_classes.filter(x => x != 'has-alert');
-        }
+          if (this.nodeHasAlert(node, alerts)) {
+            node.extra_classes = ['has-alert'];
+          } else if (
+            metrics.available_services &&
+            metrics.available_services.includes(node.service_id)
+          ) {
+            node.extra_classes = ['is-ok'];
+          }
 
-        return node;
-      }),
+          return node;
+        })
+        // cluster nodes must be last in the stack
+        // otherwise referenced nodes are not rendered yet
+        .sort((a, b) => (a.type == 'cluster' ? 1 : -1)),
     ];
 
     return (
@@ -532,6 +541,7 @@ class Graph extends React.Component {
           renderNodeText={RenderNodeText}
           renderNode={RenderNode}
           afterRenderEdge={AfterRenderEdge}
+          gridSpacing={36}
           gridDotSize={1}
         />
       </div>
