@@ -19,7 +19,6 @@
     "live-serve": "npm-run-all --parallel watch live-server",
     "lint": "eslint src",
     "lint-fix": "eslint --fix src",
-    "precommit": "lint-staged && npm run test",
     "prefast-test": "npm run prepublish",
     "prepublish": "npm run package",
     "serve": "npm run live-serve",
