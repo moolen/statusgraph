@@ -1,5 +1,6 @@
 import * as React from 'react';
 import './tooltip.scss';
+import Sparkline from './sparkline';
 
 class Tooltip extends React.Component {
   getMatchingAlerts() {
@@ -27,12 +28,7 @@ class Tooltip extends React.Component {
     let viewMetrics = [];
 
     if (metrics && metrics.metrics && metrics.metrics[sid]) {
-      viewMetrics = Object.keys(metrics.metrics[sid]).map(metric => {
-        return {
-          name: metric,
-          value: metrics.metrics[sid][metric],
-        };
-      });
+      viewMetrics = metrics.metrics[sid];
     }
 
     if (!el || (alerts.length == 0 && viewMetrics.length == 0)) {
@@ -67,7 +63,7 @@ class Tooltip extends React.Component {
         <div className="list-wrapper">
           <ul>
             {alerts.map(alert => (
-              <li key={alert.fingerprint}>
+              <li key={alert.fingerprint} className="alert-item">
                 {alert.labels.alertname}
                 <div className="label-list">
                   {Object.keys(alert.labels).map(key => {
@@ -80,9 +76,15 @@ class Tooltip extends React.Component {
                 </div>
               </li>
             ))}
-            {viewMetrics.map(metric => (
-              <li key={metric.name}>
-                {metric.name} : {metric.value}
+            {Object.keys(viewMetrics).map(name => (
+              <li key={name} className="metric-item">
+                <span className="metric-num">
+                  {name}:{' '}
+                  {Number(
+                    viewMetrics[name][viewMetrics[name].length - 1].value
+                  ).toFixed(2)}
+                </span>
+                <Sparkline width="200" height="30" data={viewMetrics[name]} />
               </li>
             ))}
           </ul>
