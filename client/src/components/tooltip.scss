@@ -26,11 +26,24 @@
     }
 
     ul{
-        overflow-y: auto;
         margin: 0;
         padding: 0;
         li{
+            position: relative;
             list-style: none;
+            &.metric-item {
+                margin: 5px 0;
+                .metric-num{
+                    display: block;
+                    width: 200px;
+                }
+                .sparkline{
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    width: 170px;
+                }
+            }
         }
     }
     .label-list{
