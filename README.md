@@ -4,45 +4,35 @@ A status page for your distributed system.
 ## Overview
 This is a webapp that let's you visualize your system: create nodes and edges to draw your system architecture and signify dependencies. Annotate your services with Metrics and Alerts via `Prometheus` and `Alertmanager`.
 
+Conceptually, you want to know if your service is "running", i.e. it is in a binary state: `red` lamp vs. `green` lamp.
+This question is incredibly hard to answer. Statusgraph taks this approach: you define alerts via Prometheus which indicate a red/yellow lamp (service is dead / not available / has issues ..).
+Additionally, you can map metrics
+
+Alert Example:
+
+```
+- alert: service_down
+    expr: up == 0
+    labels:
+      severity: critical
+      service_id: "{{ $labels.service_id }}" # this is known at alert-time
+    annotations:
+      description: Service {{ $labels.instance }} is unavailable.
+      runbook: "http://example.com/foobar"
+```
+
 ## Requirements
 * alertmanager v0.20.0 and above
+* prometheus
 
 ## use-cases
 
-You can visualize many different aspects of your environment
+You can visualize many different aspects of your environment.
 * 10.000ft view of your distributed system
-* self-contained system of a single team (a bunch of services)
+* self-contained system of a single team (a bunch of services, databases)
 * network aspects: CDN, DNS & Edge services
 * end-user view: edge services, blackbox tests
 * Data engineering pipeline: visualize DAGs / ETL Metrics
-
-## TODO
-
-* R1 server-side storage
-  * (x) pass mapping config to frontend (lookup idx)
-  * (x) store graph-data and graph-config on the server side
-  * (x) allow multiple stages (graph-data instances) to be rendered
-  * (4) make them editable through web UI (Overlay / ACE Editor or so)
-
-* R2 node-editor
-  * (x) refactor node-editor in its own component
-  * (x) fix: force re-render after edit
-  * (x) edit: name, type, node_id
-  * (3) save button / global enter to save values
-
-* R3 tooltip: alertmapping & metrics
-  * (x) implement tooltip component
-  * (1) colorize node when alert matches
-  * (x) display alerts in a tooltip on hover
-  * (2) display metrics in a tooltip on hover
-
-* R4 graph-config library (deps R1)
-  * (3) implement config library with shapes
-        consider using draw.io shapes (AWS/GCP..)
-
-* R5 node cluster
-  * (x) group nodes in a cluster
-  * (1) move cluster
 
 ## Components
 ## Server
@@ -56,11 +46,11 @@ You can visualize many different aspects of your environment
 ```yaml
 upstream:
   prometheus:
-    url: http://foo:bar@prometheus.svc
+    url: http://localhost:9090
   alertmanager:
-    url: http://foo:bar@prometheus.svc
+    url: http://localhost:9093
   servicegraph:
-    url: http://foo:bar@prometheus.svc/my.svg
+    url: http://localhost:9090
 
 mapping:
   # this defines how we select alerts to display
@@ -73,20 +63,64 @@ mapping:
       - severity: "warning"
         important: "true"
     map:
-      label: "graph_node_id"
+      label: "service_id"
+
+  # this helps us to find all existing services by fetching the label values
+  # reference: https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values
+  service_labels:
+    - 'service_id'
 
   metrics:
+    queries:
     # (for now) a single use-case is supported:
-    #   we have a metric "availability:5m" with label graph_node_id
+    #   we have a metric with label service_id
     #   and we want to map the label values to a node in the graph
-    map:
-      - metric: "tcp:availability:5m"
-        label: "graph_node_id"
-      - metric: "dns:availability:5m"
-        label: "graph_node_id"
-      - metric: "http:error:rate:5m"
-        label: "graph_node_id"
+      - name: CPU
+        query: sum(rate(node_cpu_seconds_total[1m])) by (service_id)
+        service_label: service_id
 ```
 
 ## Client
-* renders & updates the graph state
+TBD
+
+## Roadmap
+#### graph import & streaming
+* i want to import the graph configuration from different file formats (plantuml, dot..)
+* right now the graph configuration is static. This works for a logical representation. But computing environments are very dynamic, so
+ i want to stream the graph configuration via an API
+  * do we need a hybrid approach? (cluster per dynamic-api AND static config?)
+  * which upstream API to spike? How do we determine the edges? kubernetes/$CLOUD?
+  * can we use traces (L3/4: tcp/udp/ip via eBPF, L7 via opentracing?) to determine the nodes and edges?
+
+#### further customization
+* as a user i want to cross-reference other services (e.g. grafana) from the tooltip (e.g. link to dashboard, runbook etc.)
+
+## TODO
+
+* R1 Backend
+  * (x) pass mapping config to frontend (lookup idx)
+  * (x) store graph-data and graph-config on the server side
+  * (x) allow multiple stages (graph-data instances) to be rendered
+  * (7) make them editable through web UI (Overlay / ACE Editor or so)
+
+* R2 Graph UI
+  * (x) implement tooltip component
+  * (x) colorize node when alert matches
+  * (x) display alerts in a tooltip on hover
+  * (x) display metrics in a tooltip on hover
+    * (4) :sparkles: add sparkline for metrics https://github.com/KyleAMathews/react-sparkline
+
+  * R2.2 Node Clustering
+    * (x) group nodes in a cluster
+    * (x) move cluster
+
+* R3 node-editor UI
+  * (x) refactor node-editor in its own component
+  * (x) fix: force re-render after edit
+  * (x) edit: name, type, node_id
+  * (2) usability: handle hover with select
+  * (3) usability: handle enter & escape for save/exit
+
+* R4 graph-config library
+  * (3) implement config library with shapes
+        consider using draw.io shapes (AWS/GCP..)
