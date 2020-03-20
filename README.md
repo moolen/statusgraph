@@ -124,3 +124,31 @@ TBD
 * R4 graph-config library
   * (3) implement config library with shapes
         consider using draw.io shapes (AWS/GCP..)
+
+
+## Developing
+
+Run Server
+
+```
+$ make binary
+$ ./bin/statusgraph server --config ./config.yaml
+```
+
+Run Test Infra
+
+```
+$ cd hack
+$ docker-compose up  -d
+
+# test failure
+$ docker-compose stop cart.svc
+```
+
+Run Client
+
+```
+$ cd client; npm install; npm run watch
+```
+
+You can access prometheus via `localhost:9090`, alertmanager via `localhost:9093` and the backend (which serves the SPA too) via `localhost:8000`.
