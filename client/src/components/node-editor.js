@@ -86,9 +86,15 @@ class NodeEditor extends React.Component {
     };
     const ev = this.state.editValues;
 
-    const allChildren = this.props.nodes.map(node => {
-      return { value: node.id, label: node.title || node.service_id };
-    });
+    const allChildren = this.props.nodes
+      .filter(node => node.type != 'cluster')
+      .filter(node => node.id != this.props.node.id)
+      .map(node => {
+        return {
+          value: node.id,
+          label: node.title || node.service_id || node.id,
+        };
+      });
     const selectedChildren = allChildren.filter(x =>
       ev.children.includes(x.value)
     );
