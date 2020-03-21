@@ -425,7 +425,10 @@ class Graph extends React.Component {
       );
     }
 
-    if (this.props.alerts != prevProps.alerts) {
+    if (
+      this.props.alerts != prevProps.alerts ||
+      this.props.metrics != prevProps.metrics
+    ) {
       this.GraphView.renderNodes();
     }
   }
