@@ -10,11 +10,11 @@ import (
 
 func init() {
 	flags := serverCommand.PersistentFlags()
-	flags.String("store", "/data", "path in which the credentials will be stored")
+	flags.String("static-dir", ".", "path to the static dir")
 	flags.String("config", "config.yaml", "path to the config file which contains the server configuration")
 	viper.BindPFlags(flags)
 	viper.BindEnv("store", "STORE")
-	viper.BindEnv("config", "CONFIG")
+	viper.BindEnv("static-dir", "STATIC_DIR")
 	rootCmd.AddCommand(serverCommand)
 }
 
@@ -28,7 +28,7 @@ var serverCommand = &cobra.Command{
 			log.Fatal(err)
 		}
 		// start server
-		srv := server.New(cfg)
+		srv := server.New(cfg, viper.GetString("static-dir"))
 		log.Infof("listening on %s", srv.Addr)
 		log.Fatal(srv.ListenAndServe())
 

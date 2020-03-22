@@ -20,7 +20,7 @@ type Server struct {
 }
 
 // New ..
-func New(cfg *config.ServerConfig) *Server {
+func New(cfg *config.ServerConfig, staticDir string) *Server {
 	router := mux.NewRouter()
 	s := store.NewDisk("./data")
 	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +36,7 @@ func New(cfg *config.ServerConfig) *Server {
 		json.NewEncoder(w).Encode(cfg.Mapping)
 	})
 
-	spa := staticHandler{staticPath: "./client/dist", indexPath: "index.html"}
+	spa := staticHandler{staticPath: staticDir, indexPath: "index.html"}
 	router.PathPrefix("/").Handler(spa)
 
 	return &Server{
