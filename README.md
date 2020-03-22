@@ -108,7 +108,7 @@ TBD
   * (x) colorize node when alert matches
   * (x) display alerts in a tooltip on hover
   * (x) display metrics in a tooltip on hover
-    * (4) :sparkles: add sparkline for metrics https://github.com/KyleAMathews/react-sparkline
+    * (x) :sparkles: add sparkline for metrics
 
   * R2.2 Node Clustering
     * (x) group nodes in a cluster
