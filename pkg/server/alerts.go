@@ -18,7 +18,7 @@ func FetchAlerts(cfg *config.ServerConfig) http.HandlerFunc {
 		}
 		req, err := http.NewRequest(
 			"GET",
-			fmt.Sprintf("%s:/api/v2/alerts", cfg.Upstream.Alertmanager.URL),
+			fmt.Sprintf("%s/api/v2/alerts", cfg.Upstream.Alertmanager.URL),
 			nil)
 		if err != nil {
 			log.Error(err)
@@ -51,4 +51,24 @@ func FetchAlerts(cfg *config.ServerConfig) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(alerts)
 	}
+}
+
+func filterAlerts(cfg config.AlertMappingType, alerts []am.GettableAlert) ([]am.GettableAlert, error) {
+	out := make([]am.GettableAlert, 0)
+nextAlert:
+	for _, alert := range alerts {
+		for _, sel := range cfg.LabelSelector {
+			match := true
+			for k, v := range sel {
+				if alert.Labels[k] != v {
+					match = false
+				}
+			}
+			if match {
+				out = append(out, alert)
+				continue nextAlert
+			}
+		}
+	}
+	return out, nil
 }

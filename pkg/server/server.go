@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/moolen/statusgraph/pkg/config"
 	"github.com/moolen/statusgraph/pkg/store"
-	am "github.com/prometheus/alertmanager/api/v2/models"
 )
 
 // Server ..
@@ -50,24 +49,4 @@ func New(cfg *config.ServerConfig, staticDir string) *Server {
 		cfg,
 		s,
 	}
-}
-
-func filterAlerts(cfg config.AlertMappingType, alerts []am.GettableAlert) ([]am.GettableAlert, error) {
-	var out []am.GettableAlert
-nextAlert:
-	for _, alert := range alerts {
-		for _, sel := range cfg.LabelSelector {
-			match := true
-			for k, v := range sel {
-				if alert.Labels[k] != v {
-					match = false
-				}
-			}
-			if match {
-				out = append(out, alert)
-				continue nextAlert
-			}
-		}
-	}
-	return out, nil
 }
