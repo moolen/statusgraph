@@ -126,6 +126,10 @@ TBD
         consider using draw.io shapes (AWS/GCP..)
 
 
+* R5 Misc. optimizations
+  * metrics & alerts caching
+  * decouple client and upstream requests
+
 ## Developing
 
 Run Server
