@@ -22,8 +22,12 @@ func NewDisk(dir string) *DiskStore {
 }
 
 func (d *DiskStore) Save(key string, data *Stage) error {
-	fn := path.Join(d.RootDir, key)
-	err := os.MkdirAll(filepath.Dir(fn), 0660)
+	p, err := filepath.Abs(key)
+	if err != nil {
+		return err
+	}
+	fn := path.Join(d.RootDir, p)
+	err = os.MkdirAll(filepath.Dir(fn), 0660)
 	if err != nil {
 		return err
 	}
@@ -33,6 +37,16 @@ func (d *DiskStore) Save(key string, data *Stage) error {
 	}
 	return json.NewEncoder(f).Encode(data)
 }
+
+func (d *DiskStore) Delete(key string) error {
+	p, err := filepath.Abs(key)
+	if err != nil {
+		return err
+	}
+	fn := path.Join(d.RootDir, p)
+	return os.Remove(fn)
+}
+
 func (d *DiskStore) Load() ([]Stage, error) {
 	stages := make([]Stage, 0)
 	err := filepath.Walk(d.RootDir,

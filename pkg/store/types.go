@@ -1,9 +1,14 @@
 package store
 
+import (
+	"github.com/google/uuid"
+)
+
 type Stage struct {
-	Name  string `json:"name"`
-	Edges []Edge `json:"edges"`
-	Nodes []Node `json:"nodes"`
+	ID    uuid.UUID `json:"id"`
+	Name  string    `json:"name"`
+	Edges []Edge    `json:"edges"`
+	Nodes []Node    `json:"nodes"`
 }
 
 type Edge struct {
@@ -24,5 +29,6 @@ type Node struct {
 
 type DataStore interface {
 	Save(key string, data *Stage) error
+	Delete(key string) error
 	Load() ([]Stage, error)
 }

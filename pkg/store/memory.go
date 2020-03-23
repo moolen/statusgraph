@@ -22,6 +22,13 @@ func (d *MemStore) Save(key string, data *Stage) error {
 	return nil
 }
 
+func (d *MemStore) Delete(key string) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	delete(d.data, key)
+	return nil
+}
+
 func (d *MemStore) Load() ([]Stage, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
