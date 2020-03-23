@@ -11,7 +11,8 @@ import GraphConfig, {
 
 import Tooltip from './components/tooltip';
 import NodeEditor from './components/node-editor';
-import AddStage from './components/add-stage';
+
+import Titlebar from './components/titlebar';
 import {
   RenderNode,
   RenderNodeText,
@@ -36,11 +37,13 @@ class Graph extends React.Component {
     availableStages: [],
     stageSelector: '',
     hoveredNode: null,
-    mouseX: 0,
-    mouseY: 0,
+
     nodeEdtiorX: 0,
     nodeEdtiorY: 0,
   };
+
+  mouseX = 0;
+  mouseY = 0;
 
   tooltipContainer = null;
 
@@ -54,37 +57,23 @@ class Graph extends React.Component {
 
     this.GraphView = React.createRef();
     this.toggleWriteLock = this.toggleWriteLock.bind(this);
-    this.toggleLayoutEngine = this.toggleLayoutEngine.bind(this);
 
     this.syncStages();
 
     // for debugging
     // TODO: remove
     window.gr = this;
+
+    this.onChangeStage = this.onChangeStage.bind(this);
+    this.onAddStage = this.onAddStage.bind(this);
+    this.onUpdateStage = this.onUpdateStage.bind(this);
+    this.onDeleteStage = this.onDeleteStage.bind(this);
+    this.onNodeEditChange = this.onNodeEditChange.bind(this);
+    this.onNodeEditExit = this.onNodeEditExit.bind(this);
   }
 
   toggleWriteLock() {
     this.setState({ writeLocked: !this.state.writeLocked });
-  }
-
-  toggleLayoutEngine() {
-    if (this.state.layoutEngine == 'SnapToGrid') {
-      this.setState({ layoutEngine: 'VerticalTree' });
-    } else {
-      this.setState({ layoutEngine: 'SnapToGrid' });
-    }
-  }
-
-  saveStage() {
-    fetch(
-      `http://localhost:8000/api/graph/${encodeURIComponent(
-        this.state.selectedStage
-      )}`,
-      {
-        method: 'POST',
-        body: JSON.stringify(this.state.graph),
-      }
-    );
   }
 
   syncStages() {
@@ -117,10 +106,8 @@ class Graph extends React.Component {
   }
 
   onMouseMove(e) {
-    this.setState({
-      mouseX: e.nativeEvent.offsetX,
-      mouseY: e.nativeEvent.offsetY,
-    });
+    this.mouseX = e.nativeEvent.offsetX;
+    this.mouseY = e.nativeEvent.offsetY;
 
     if (this.mouseMoveTimeout) {
       clearTimeout(this.mouseMoveTimeout);
@@ -142,9 +129,11 @@ class Graph extends React.Component {
         viewNode = this.getViewNode(id);
       }
 
-      this.setState({
-        hoveredNode: viewNode,
-      });
+      if (viewNode != this.state.hoveredNode) {
+        this.setState({
+          hoveredNode: viewNode,
+        });
+      }
     }, 100);
   }
 
@@ -226,8 +215,8 @@ class Graph extends React.Component {
         selectedNode: viewNode,
         selectedEntity: {}, // disable node selection. we could accidentally delete it
         nodeEditEnabled: true,
-        nodeEdtiorX: this.state.mouseX,
-        nodeEdtiorY: this.state.mouseY,
+        nodeEdtiorX: this.mouseX,
+        nodeEdtiorY: this.mouseY,
       });
     } else {
       this.doubleClickPending = true;
@@ -279,32 +268,59 @@ class Graph extends React.Component {
     this.GraphView.renderNodes();
   }
 
-  onAddStage(stageName) {
-    fetch(`http://localhost:8000/api/graph/${stageName}`, {
+  onDeleteStage() {
+    fetch(`http://localhost:8000/api/graph/${this.state.graph.id}`, {
+      method: 'DELETE',
+    }).then(this.syncStages.bind(this));
+  }
+
+  onUpdateStage(stageName) {
+    if (!this.state.graph.id) {
+      fetch(`http://localhost:8000/api/graph`, {
+        method: 'POST',
+        body: JSON.stringify(this.state.graph),
+      })
+        .then(res => res.json())
+        .then(graph => {
+          this.setState({
+            selectedStage: stageName,
+            graph,
+          });
+        });
+
+      return;
+    }
+
+    fetch(`http://localhost:8000/api/graph/${this.state.graph.id}`, {
       method: 'POST',
       body: JSON.stringify(this.state.graph),
-    }).then(() => {
-      const { availableStages } = this.state;
-      const graph = {
-        nodes: [],
-        edges: [],
-      };
-
-      this.setState({
-        selectedStage: stageName,
-        availableStages: [{ name: stageName, graph }, ...availableStages],
-        graph,
-      });
     });
   }
 
-  onChangeStage(e) {
-    const stage = this.state.availableStages.find(
-      x => x.name == e.target.value
-    );
+  onAddStage(stageName) {
+    fetch(`http://localhost:8000/api/graph`, {
+      method: 'POST',
+      body: JSON.stringify({
+        name: stageName,
+        edges: [],
+        nodes: [],
+      }),
+    })
+      .then(res => res.json())
+      .then(graph => {
+        const { availableStages } = this.state;
 
+        this.setState({
+          selectedStage: stageName,
+          availableStages: [{ name: stageName, graph }, ...availableStages],
+          graph,
+        });
+      });
+  }
+
+  onChangeStage(name, stage) {
     this.setState({
-      selectedStage: e.target.value,
+      selectedStage: name,
       graph: stage,
     });
     setTimeout(() => {
@@ -406,7 +422,7 @@ class Graph extends React.Component {
     );
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps, prevState) {
     if (this.tooltipContainer) {
       ReactDOM.render(
         <div className="tooltip-wrapper">
@@ -452,13 +468,13 @@ class Graph extends React.Component {
 
   render() {
     const { edges } = this.state.graph;
-    let { nodes } = this.state.graph;
+    const { nodes } = this.state.graph;
     const alerts = this.props.alerts || [];
     const metrics = this.props.metrics || [];
     const { NodeTypes, NodeSubtypes, EdgeTypes } = GraphConfig;
 
     // add extra class names to nodes which have an alert
-    nodes = [
+    const annotatedNodes = [
       ...nodes
         .map(node => {
           node.extra_classes = node.extra_classes || [];
@@ -481,53 +497,29 @@ class Graph extends React.Component {
 
     return (
       <div id="graph" onMouseMove={this.onMouseMove.bind(this)}>
-        <div className="title-bar">
-          <select
-            ref={input => {
-              this.$stageSelector = input;
-            }}
-            value={this.state.selectedStage}
-            onChange={this.onChangeStage.bind(this)}
-            className="stage-selector"
-          >
-            {this.state.availableStages.map(stage => {
-              return (
-                <option key={stage.name} value={stage.name}>
-                  {stage.name}
-                </option>
-              );
-            })}
-          </select>
-          <AddStage onAdd={this.onAddStage.bind(this)} />
-          <div
-            className={'save-stage'}
-            onClick={this.saveStage.bind(this)}
-          ></div>
-          <div
-            className={
-              'write-lock ' + (this.state.writeLocked ? 'locked' : 'unlocked')
-            }
-            onClick={this.toggleWriteLock}
-          ></div>
-          <div
-            className={'layout-mode ' + this.state.layoutEngine}
-            onClick={this.toggleLayoutEngine}
-          ></div>
-        </div>
+        <Titlebar
+          availableStages={this.state.availableStages}
+          writeLocked={this.state.writeLocked}
+          selectedStage={this.state.selectedStage}
+          onChange={this.onChangeStage}
+          onAdd={this.onAddStage}
+          onUpdate={this.onUpdateStage}
+          onDelete={this.onDeleteStage}
+        />
         <NodeEditor
           x={this.state.nodeEdtiorX}
           y={this.state.nodeEdtiorY}
-          onNodeEditChange={this.onNodeEditChange.bind(this)}
-          onNodeEditExit={this.onNodeEditExit.bind(this)}
+          onNodeEditChange={this.onNodeEditChange}
+          onNodeEditExit={this.onNodeEditExit}
           enabled={this.state.nodeEditEnabled}
           node={this.state.selectedNode}
-          nodes={nodes}
+          nodes={this.state.graph.nodes}
         />
         <GraphView
           ref={el => (this.GraphView = el)}
           nodeKey={NODE_KEY}
           layoutEngineType={this.state.layoutEngine}
-          nodes={nodes}
+          nodes={annotatedNodes}
           edges={edges}
           selected={this.state.selectedEntity}
           nodeTypes={NodeTypes}

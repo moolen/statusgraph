@@ -1,5 +1,5 @@
 import * as React from 'react';
-import './add-stage.scss';
+import './stage-add.scss';
 
 class AddStage extends React.Component {
   state = {

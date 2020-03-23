@@ -120,10 +120,10 @@ TBD
   * (x) refactor node-editor in its own component
   * (x) fix: force re-render after edit
   * (x) edit: name, type, node_id
-  * (2) implement input validation & display errors
+  * (x) implement input validation & display errors
   * (x) usability: auto focus service id on create
   * (x) usability: handle enter to save
-  * (2) usability: handle hover with select
+  * (x) usability: handle hover with select
   * (3) usability: handle escape for exit
 
 * R4 graph-config library

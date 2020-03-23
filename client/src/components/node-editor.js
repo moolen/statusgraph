@@ -110,6 +110,11 @@ class NodeEditor extends React.Component {
     const v = this.state.editValues;
 
     v.type = type.value;
+
+    if (v.type != 'cluster') {
+      v.children = [];
+    }
+
     this.setState({ editValues: v });
   };
 

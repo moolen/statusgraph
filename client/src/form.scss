@@ -98,5 +98,13 @@
         border-color: hsl(214, 100%, 30%);
       }
     }
+    &.red {
+      background-color: hsl(0, 100%, 57%);
+      border-color: hsl(0, 100%, 40%);
+      &:hover{
+        background-color: hsl(0, 100%, 47%);
+        border-color: hsl(0, 100%, 30%);
+      }
+    }
   }
 }
