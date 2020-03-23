@@ -31,6 +31,15 @@ class NodeEditor extends React.Component {
           title: this.props.node.title || '',
         },
       });
+      this.serviceIDInput.focus();
+    }
+  }
+
+  handleInputKeydown(e) {
+    if (e.key == 'Enter') {
+      this.onSubmit();
+
+      return;
     }
   }
 
@@ -42,7 +51,32 @@ class NodeEditor extends React.Component {
     this.setState({ editValues: values });
   }
 
+  validate() {
+    const errors = [];
+
+    if (
+      this.state.editValues.type == 'cluster' &&
+      this.state.editValues.children.length == 0
+    ) {
+      errors.push('children can not be empty');
+    }
+
+    if (errors.length > 0) {
+      return errors.join(' ');
+    }
+
+    return null;
+  }
+
   onSubmit(e) {
+    const err = this.validate();
+
+    if (err) {
+      alert(err);
+
+      return;
+    }
+
     const oldNode = {};
     const newNode = {};
 
@@ -112,6 +146,7 @@ class NodeEditor extends React.Component {
             ref={input => {
               this.serviceIDInput = input;
             }}
+            onKeyDown={this.handleInputKeydown.bind(this)}
             onChange={this.handleTextChange.bind(this)}
             name="service_id"
             value={ev.service_id}
@@ -124,6 +159,7 @@ class NodeEditor extends React.Component {
             ref={input => {
               this.titleInput = input;
             }}
+            onKeyDown={this.handleInputKeydown.bind(this)}
             onChange={this.handleTextChange.bind(this)}
             name="title"
             value={ev.title}

@@ -224,6 +224,7 @@ class Graph extends React.Component {
       clearTimeout(this.doubleClickTimeout);
       this.setState({
         selectedNode: viewNode,
+        selectedEntity: {}, // disable node selection. we could accidentally delete it
         nodeEditEnabled: true,
         nodeEdtiorX: this.state.mouseX,
         nodeEdtiorY: this.state.mouseY,
