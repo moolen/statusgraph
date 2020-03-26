@@ -12,9 +12,10 @@ type Stage struct {
 }
 
 type Edge struct {
-	Source string `json:"source"`
-	Target string `json:"target"`
-	Type   string `json:"type"`
+	Source     string `json:"source"`
+	Target     string `json:"target"`
+	TargetPort string `json:"target_port"`
+	Type       string `json:"type"`
 }
 type Node struct {
 	ID        string   `json:"id"`

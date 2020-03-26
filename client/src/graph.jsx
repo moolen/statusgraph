@@ -24,7 +24,7 @@ class Graph extends React.Component {
 
   state = {
     copiedNode: null,
-    layoutEngine: 'SnapToGrid',
+    layoutEngine: 'SnapToGrid', // None
     writeLocked: false,
     graph: {
       name: 'default',

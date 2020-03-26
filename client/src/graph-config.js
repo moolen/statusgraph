@@ -90,7 +90,7 @@ const SpecialChildShape = (
 
 const RegularEdgeShape = (
   <symbol viewBox="0 0 50 50" id="regular">
-    <circle cx="25" cy="25" r="8" fill="currentColor" />
+    <circle cx="25" cy="25" r="2" fill="currentColor" />
   </symbol>
 );
 

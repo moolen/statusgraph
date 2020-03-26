@@ -47,7 +47,7 @@ class Titlebar extends React.Component {
         >
           {availableStages.map(stage => {
             return (
-              <option key={stage.id} value={stage.name}>
+              <option key={stage.id || 'default'} value={stage.name}>
                 {stage.name}
               </option>
             );

@@ -76,7 +76,8 @@
     "react": "^16.13.0",
     "react-digraph": "^6.6.4",
     "react-select": "^3.0.8",
-    "svg-intersections": "^0.4.0"
+    "svg-intersections": "^0.4.0",
+    "uuid": "^7.0.2"
   },
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^5.7.2",
