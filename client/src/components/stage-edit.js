@@ -1,5 +1,5 @@
 import * as React from 'react';
-import './edit-stage.scss';
+import './stage-edit.scss';
 
 class EditStage extends React.Component {
   constructor(props) {

@@ -13,6 +13,7 @@
       .port-input-wrap{
         display: flex;
         padding: 0 20px 0 20px;
+        margin: 0 0 10px 0;
       }
     }
 
@@ -22,7 +23,6 @@
 
     &.select-row{
       .selector{
-        height: 20px;
         width: 100%;
       }
       input{

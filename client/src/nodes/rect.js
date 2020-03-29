@@ -1,11 +1,38 @@
 import * as d3 from 'd3';
 import * as React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 class Rect extends React.Component {
   state = {};
+  static width = 100;
+  static height = 40;
   constructor(props) {
     super(props);
     this.nodeRef = React.createRef();
+  }
+
+  static new(x, y, name) {
+    return {
+      id: uuidv4(),
+      type: Rect,
+      name: name,
+      connector: [],
+      bounds: {
+        x: x,
+        y: y,
+      },
+    };
+  }
+
+  static getConnectorPosition(node, edgeTarget) {
+    return {
+      x: node.bounds.x + Rect.width / 2,
+      y: node.bounds.y + Rect.height / 2,
+    };
+  }
+
+  static getEdgeTargetID(edgeTarget) {
+    return edgeTarget.id;
   }
 
   componentDidMount() {
@@ -30,9 +57,7 @@ class Rect extends React.Component {
     });
   }
 
-  handleDragStart() {
-    console.log(`drag start`);
-  }
+  handleDragStart() {}
 
   handleMouseMove(event) {
     const shiftKey = event.sourceEvent.shiftKey;
@@ -55,7 +80,7 @@ class Rect extends React.Component {
     this.setState(newState);
 
     onUpdatePosition(
-      node.id,
+      node,
       { x: newState.x, y: newState.y },
       { x: event.x, y: event.y },
       shiftKey
@@ -68,37 +93,36 @@ class Rect extends React.Component {
   }
 
   handleMouseOver = () => {
-    // TODO: throttle
     this.props.onMouseOver(this.props.node);
   };
   handleMouseOut = () => {
-    // TODO: throttle
     this.props.onMouseOut(this.props.node);
   };
 
   render() {
-    const { node } = this.props;
+    const { node, selected } = this.props;
 
     return (
       <g
         ref={this.nodeRef}
+        className="node-group"
         onMouseOver={this.handleMouseOver}
         onMouseOut={this.handleMouseOut}
+        transform={'translate(' + node.bounds.x + ', ' + node.bounds.y + ')'}
       >
         <rect
-          width={node.bounds.width}
-          height={node.bounds.height}
+          className={
+            'node rect' + (selected ? ' selected ' : ' ') + this.props.highlight
+          }
+          width={Rect.width}
+          height={Rect.height}
           rx="5"
           ry="5"
-          stroke="#ccc"
-          strokeWidth=".5"
-          x={node.bounds.x}
-          y={node.bounds.y}
-          fill="white"
         />
         <text
-          x={node.bounds.x + node.bounds.width / 2}
-          y={node.bounds.y + node.bounds.height / 2}
+          className="node-text"
+          x={Rect.width / 2}
+          y={Rect.height / 2}
           textAnchor="middle"
           dominantBaseline="middle"
         >
@@ -109,4 +133,7 @@ class Rect extends React.Component {
   }
 }
 
-export default Rect;
+Rect.SUPPORT_DYNAMIC_SOURCE_EDGE = true;
+Rect.SUPPORT_DYNAMIC_TARGET_EDGE = true;
+
+export { Rect };

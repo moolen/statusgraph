@@ -1,6 +1,9 @@
 
 .node-editor {
   position: absolute;
+  top: 80px;
+  right: 20px;
+  width: 320px;
   z-index: 1;
   display: none;
   padding: 20px 30px;
@@ -8,13 +11,20 @@
   border: 1px solid #ccc;
   border-radius: 2px;
   box-shadow: 1px 1px 5px #cccccc;
+  max-height: 100%;
+  //overflow-y: auto; // meh
   &.enabled{
     display: block;
   }
 }
 
+.port-wrapper{
+  border-bottom: 1px solid #ccc;
+    padding-bottom: 20px;
+}
+
 .left-arrow {
-  display: inline-block;
+  //display: none;
 }
 .left-arrow:before {
   content: '';

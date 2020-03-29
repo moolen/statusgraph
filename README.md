@@ -124,7 +124,7 @@ TBD
   * (x) usability: auto focus service id on create
   * (x) usability: handle enter to save
   * (x) usability: handle hover with select
-  * (3) usability: handle escape for exit
+  * (x) usability: handle escape for exit
 
 * R4 graph-config library
   * (3) implement config library with shapes

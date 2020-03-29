@@ -1,425 +1,81 @@
-import * as React from 'react';
+import * as d3 from 'd3';
 import ReactDOM from 'react-dom';
-
-import { GraphView } from './lib/react-digraph';
-import GraphConfig, {
-  REGULAR_EDGE_TYPE,
-  RECT_TYPE,
-  CLUSTER_TYPE,
-  NODE_KEY,
-} from './graph-config'; // Configures node/edge types
-
-import Tooltip from './components/tooltip';
-import NodeEditor from './components/node-editor';
-
-import Titlebar from './components/titlebar';
+import * as React from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import './graph.scss';
+import DebugComponent from './lib/debug-component';
 import {
-  RenderNode,
-  RenderNodeText,
-  AfterRenderEdge,
-} from './components/renderer/node-renderer';
+  Rect,
+  Diamond,
+  Cluster,
+  Service,
+  Poly,
+  Pointer,
+  Edge,
+  Titlebar,
+  NodeEditor,
+  Tooltip,
+  GraphUtils,
+} from './internal';
 
-class Graph extends React.Component {
-  GraphView;
+import { RenderLayerMap, LAYER_EDGE } from './config';
 
-  state = {
-    copiedNode: null,
-    layoutEngine: 'SnapToGrid', // None
-    writeLocked: false,
-    graph: {
-      name: 'default',
-      edges: [],
-      nodes: [],
-    },
-    selected: null,
-    selectedNode: {},
-    selectedStage: '',
-    availableStages: [],
-    stageSelector: '',
-    hoveredNode: null,
+const n1 = Rect.new(100, 100, 'cart.svc');
+const n2 = Diamond.new(0, 0, 'cart-db.svc');
+const n3 = Poly.new(0, 200, 'orders.svc');
+const n4 = Service.new(300, 100, 'API Gateway');
+const c = Cluster.new('orders.svc', [n1.id, n2.id, n3.id]);
+const e = Edge.new(
+  {
+    type: Rect,
+    id: n1.id,
+  },
+  {
+    type: Diamond,
+    id: n2.id,
+  }
+);
 
-    nodeEdtiorX: 0,
-    nodeEdtiorY: 0,
+class Graph extends DebugComponent {
+  static defaultProps = {
+    maxZoom: 1.5,
+    minZoom: 0.5,
+    zoomDelay: 1000,
+    zoomDur: 750,
   };
 
-  mouseX = 0;
-  mouseY = 0;
+  state = {
+    hoveredNode: null,
+    draggingEdge: null,
+    writeLocked: false,
+    editorNode: null,
+    graph: {
+      id: uuidv4(),
+      name: 'example',
+      edges: [e],
+      nodes: [c, n1, n2, n3, n4],
+    },
+  };
 
-  tooltipContainer = null;
+  renderNodesTimeout = null;
+  renderEdgesTimeout = null;
+  hoverNodeTimeout = null;
+  nodeTimeouts = {};
+  edgeTimeouts = {};
 
-  // keep track of double-clicks in graph
-  doubleClickPending = false;
-  doubleClickTimeout = null;
-  mouseMoveTimeout = null;
+  renderLayer = RenderLayerMap;
+
+  background = {
+    width: 40960,
+    height: 40960,
+  };
 
   constructor(props) {
     super(props);
+    this.viewWrapper = React.createRef();
+    this.view = React.createRef();
 
-    this.GraphView = React.createRef();
-    this.toggleWriteLock = this.toggleWriteLock.bind(this);
-
-    this.syncStages();
-
-    // for debugging
-    // TODO: remove
     window.gr = this;
-
-    this.onChangeStage = this.onChangeStage.bind(this);
-    this.onAddStage = this.onAddStage.bind(this);
-    this.onUpdateStage = this.onUpdateStage.bind(this);
-    this.onDeleteStage = this.onDeleteStage.bind(this);
-    this.onNodeEditChange = this.onNodeEditChange.bind(this);
-    this.onNodeEditExit = this.onNodeEditExit.bind(this);
-  }
-
-  toggleWriteLock() {
-    this.setState({ writeLocked: !this.state.writeLocked });
-  }
-
-  syncStages() {
-    fetch('http://localhost:8000/api/graph', {})
-      .then(res => res.json())
-      .then(data => {
-        if (data.length == 0) {
-          data = [
-            {
-              name: 'default',
-              edges: [],
-              nodes: [],
-            },
-          ];
-          this.setState({
-            selectedStage: 'default',
-            availableStages: data,
-            graph: data[0],
-          });
-
-          return;
-        }
-
-        this.setState({
-          selectedStage: data[0].name,
-          availableStages: data,
-          graph: data[0],
-        });
-      });
-  }
-
-  onMouseMove(e) {
-    this.mouseX = e.nativeEvent.offsetX;
-    this.mouseY = e.nativeEvent.offsetY;
-
-    if (this.mouseMoveTimeout) {
-      clearTimeout(this.mouseMoveTimeout);
-    }
-
-    const tooltip = e.target.closest('#tooltip');
-    const node = e.target.closest('g.node');
-    let viewNode = null;
-
-    // throttle state updates
-    this.mouseMoveTimeout = setTimeout(() => {
-      if (tooltip) {
-        return;
-      }
-
-      if (node) {
-        const id = node.getAttribute('id').replace('node-', '');
-
-        viewNode = this.getViewNode(id);
-      }
-
-      if (viewNode != this.state.hoveredNode) {
-        this.setState({
-          hoveredNode: viewNode,
-        });
-      }
-    }, 100);
-  }
-
-  // Helper to find the index of a given node
-  getNodeIndex(searchNode) {
-    return this.state.graph.nodes.findIndex(node => {
-      return node[NODE_KEY] === searchNode[NODE_KEY];
-    });
-  }
-
-  // Helper to find the index of a given node
-  getNodeIndexById(id) {
-    return this.state.graph.nodes.findIndex(node => {
-      return node[NODE_KEY] === id;
-    });
-  }
-
-  // Helper to find the index of a given edge
-  getEdgeIndex(searchEdge) {
-    return this.state.graph.edges.findIndex(edge => {
-      return (
-        edge.source === searchEdge.source && edge.target === searchEdge.target
-      );
-    });
-  }
-
-  // Given a nodeKey, return the corresponding node
-  getViewNode(nodeKey) {
-    const searchNode = {};
-
-    searchNode[NODE_KEY] = nodeKey;
-    const i = this.getNodeIndex(searchNode);
-
-    return this.state.graph.nodes[i];
-  }
-
-  onUpdateNode = viewNode => {
-    const graph = this.state.graph;
-    const i = this.getNodeIndex(viewNode);
-
-    // change other nodes aswell
-    if (viewNode.type == 'cluster') {
-      viewNode.children.forEach(c => {
-        const i = this.getNodeIndexById(c);
-        const node = graph.nodes[i];
-
-        node.x += viewNode.dx;
-        node.y += viewNode.dy;
-        graph.nodes[i] = node;
-      });
-    }
-
-    graph.nodes[i] = viewNode;
-    graph.nodes = [...graph.nodes];
-    this.setState({
-      graph: graph,
-    });
-
-    this.GraphView.renderNodes();
-  };
-
-  onSelectNode = viewNode => {
-    this.setState({ selectedEntity: viewNode });
-
-    if (this.state.writeLocked) {
-      this.setState({ selectedNode: {} });
-
-      return;
-    }
-
-    if (viewNode == null) {
-      return;
-    }
-
-    if (this.doubleClickPending) {
-      this.doubleClickPending = false;
-      clearTimeout(this.doubleClickTimeout);
-      this.setState({
-        selectedNode: viewNode,
-        selectedEntity: {}, // disable node selection. we could accidentally delete it
-        nodeEditEnabled: true,
-        nodeEdtiorX: this.mouseX,
-        nodeEdtiorY: this.mouseY,
-      });
-    } else {
-      this.doubleClickPending = true;
-      this.doubleClickTimeout = setTimeout(() => {
-        this.doubleClickPending = false;
-      }, 400);
-    }
-  };
-
-  updateEdgeId(oldID, newID, edges) {
-    return edges.map(edge => {
-      if (edge.source == oldID) {
-        edge.source = newID;
-      }
-
-      if (edge.target == oldID) {
-        edge.target = newID;
-      }
-
-      return edge;
-    });
-  }
-
-  onNodeEditChange(oldNode, node) {
-    const graph = this.state.graph;
-    const i = this.getNodeIndex(node);
-
-    graph.nodes[i] = node;
-
-    // create new reference
-    graph.nodes = [...this.state.graph.nodes];
-    graph.edges = [
-      ...this.updateEdgeId(oldNode.id, node.id, this.state.graph.edges),
-    ];
-
-    this.setState({
-      graph: graph,
-      nodeEditEnabled: false,
-      selectedNode: {},
-    });
-    this.GraphView.renderNodes();
-  }
-
-  onNodeEditExit() {
-    this.setState({
-      nodeEditEnabled: false,
-      selectedNode: {},
-    });
-    this.GraphView.renderNodes();
-  }
-
-  onDeleteStage() {
-    fetch(`http://localhost:8000/api/graph/${this.state.graph.id}`, {
-      method: 'DELETE',
-    }).then(this.syncStages.bind(this));
-  }
-
-  onUpdateStage(stageName) {
-    if (!this.state.graph.id) {
-      fetch(`http://localhost:8000/api/graph`, {
-        method: 'POST',
-        body: JSON.stringify(this.state.graph),
-      })
-        .then(res => res.json())
-        .then(graph => {
-          this.setState({
-            selectedStage: stageName,
-            graph,
-          });
-        });
-
-      return;
-    }
-
-    fetch(`http://localhost:8000/api/graph/${this.state.graph.id}`, {
-      method: 'POST',
-      body: JSON.stringify(this.state.graph),
-    });
-  }
-
-  onAddStage(stageName) {
-    fetch(`http://localhost:8000/api/graph`, {
-      method: 'POST',
-      body: JSON.stringify({
-        name: stageName,
-        edges: [],
-        nodes: [],
-      }),
-    })
-      .then(res => res.json())
-      .then(graph => {
-        const { availableStages } = this.state;
-
-        this.setState({
-          selectedStage: stageName,
-          availableStages: [{ name: stageName, graph }, ...availableStages],
-          graph,
-        });
-      });
-  }
-
-  onChangeStage(name, stage) {
-    this.setState({
-      selectedStage: name,
-      graph: stage,
-    });
-    setTimeout(() => {
-      this.GraphView.handleZoomToFit();
-    }, 50);
-  }
-
-  onSelectEdge = viewEdge => {
-    this.setState({ selectedEntity: viewEdge });
-  };
-
-  onCreateNode = (x, y) => {
-    const graph = this.state.graph;
-    const type = RECT_TYPE;
-
-    const viewNode = {
-      id: Date.now().toString(),
-      service_id: '',
-      type,
-      x,
-      y,
-    };
-
-    graph.nodes = [...graph.nodes, viewNode];
-    this.setState({ graph });
-  };
-
-  // Deletes a node from the graph
-  onDeleteNode = (viewNode, nodeId, nodeArr) => {
-    const graph = this.state.graph;
-    // Delete any connected edges
-    const newEdges = graph.edges.filter((edge, i) => {
-      return (
-        edge.source !== viewNode[NODE_KEY] && edge.target !== viewNode[NODE_KEY]
-      );
-    });
-
-    graph.nodes = nodeArr;
-    graph.edges = newEdges;
-
-    this.setState({ graph, selected: null });
-  };
-
-  // Creates a new node between two edges
-  onCreateEdge = (sourceViewNode, targetViewNode) => {
-    const graph = this.state.graph;
-    const type = REGULAR_EDGE_TYPE;
-
-    const viewEdge = {
-      source: sourceViewNode[NODE_KEY],
-      target: targetViewNode[NODE_KEY],
-      type,
-    };
-
-    // Only add the edge when the source node is not the same as the target
-    if (viewEdge.source !== viewEdge.target) {
-      graph.edges = [...graph.edges, viewEdge];
-      this.setState({
-        graph,
-        selected: viewEdge,
-      });
-      this.GraphView.renderNodes();
-    }
-  };
-
-  // Called when an edge is reattached to a different target.
-  onSwapEdge = (sourceViewNode, targetViewNode, viewEdge) => {
-    const graph = this.state.graph;
-    const i = this.getEdgeIndex(viewEdge);
-    const edge = JSON.parse(JSON.stringify(graph.edges[i]));
-
-    edge.source = sourceViewNode[NODE_KEY];
-    edge.target = targetViewNode[NODE_KEY];
-    graph.edges[i] = edge;
-    // reassign the array reference if you want the graph to re-render a swapped edge
-    graph.edges = [...graph.edges];
-
-    this.setState({
-      graph,
-      selected: edge,
-    });
-  };
-
-  // Called when an edge is deleted
-  onDeleteEdge = (viewEdge, edges) => {
-    const graph = this.state.graph;
-
-    graph.edges = edges;
-    this.setState({
-      graph,
-      selected: null,
-    });
-  };
-
-  nodeHasAlert(node, alerts) {
-    return (
-      alerts.find(alert => alert.labels.service_id == node.service_id) !==
-      undefined
-    );
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -428,11 +84,7 @@ class Graph extends React.Component {
         <div className="tooltip-wrapper">
           <Tooltip
             container={this.tooltipContainer}
-            visible={
-              !this.state.nodeEditEnabled &&
-              this.state.hoveredNode != null &&
-              this.state.hoveredNode.type !== CLUSTER_TYPE
-            }
+            visible={!this.state.selectedNode && this.state.hoveredNode != null}
             node={this.state.hoveredNode}
             alerts={this.props.alerts}
             metrics={this.props.metrics}
@@ -446,13 +98,47 @@ class Graph extends React.Component {
       this.props.alerts != prevProps.alerts ||
       this.props.metrics != prevProps.metrics
     ) {
-      this.GraphView.renderNodes();
+      this.renderNodes();
     }
   }
 
   componentDidMount() {
-    const containerId = `tooltip-container`;
-    let tooltipContainer = document.getElementById(containerId);
+    const { zoomDelay, minZoom, maxZoom } = this.props;
+
+    document.addEventListener('keydown', this.handleWrapperKeydown.bind(this));
+    document.addEventListener('click', this.handleDocumentClick.bind(this));
+
+    this.zoom = d3
+      .zoom()
+      //.filter(this.zoomFilter)
+      .scaleExtent([minZoom || 0, maxZoom || 0])
+      .on('start', () => {
+        this.handleZoomStart(d3.event);
+      })
+      .on('zoom', () => {
+        this.handleZoom(d3.event);
+      })
+      .on('end', this.handleZoomEnd);
+
+    d3.select(this.viewWrapper.current)
+      .on('touchstart', this.containZoom)
+      .on('touchmove', this.containZoom)
+      .on('click', () => {
+        this.handleSvgClicked(d3.event);
+      })
+      .select('svg')
+      .call(this.zoom);
+
+    this.selectedView = d3.select(this.view);
+
+    this.renderView();
+    setTimeout(() => {
+      if (this.viewWrapper.current != null) {
+        this.handleZoomToFit();
+      }
+    }, zoomDelay);
+
+    let tooltipContainer = document.getElementById(`tooltip-container`);
 
     if (!tooltipContainer) {
       tooltipContainer = document.createElementNS(
@@ -461,88 +147,706 @@ class Graph extends React.Component {
       );
       tooltipContainer.classList.add('tooltip-container');
       // it must be within g.view so zoom and translation works
-      this.GraphView.graphSvg.current.children[1].appendChild(tooltipContainer);
+      this.view.appendChild(tooltipContainer);
       this.tooltipContainer = tooltipContainer;
     }
   }
 
-  render() {
-    const { edges } = this.state.graph;
-    const { nodes } = this.state.graph;
-    const alerts = this.props.alerts || [];
-    const metrics = this.props.metrics || [];
-    const { NodeTypes, NodeSubtypes, EdgeTypes } = GraphConfig;
+  handleWrapperKeydown(e) {
+    if (e.key == 'Escape') {
+      this.setState({
+        editorNode: null,
+        selectedEdge: null,
+        draggingEdge: null,
+      });
+    }
 
-    // add extra class names to nodes which have an alert
-    const annotatedNodes = [
-      ...nodes
-        .map(node => {
-          node.extra_classes = node.extra_classes || [];
+    if (['Backspace', 'Delete'].includes(e.key) && !this.state.editorNode) {
+      this.removeNodeByID(this.state.selectedNode);
+      this.removeEdgeByID(this.state.selectedEdge);
+      this.renderNodes();
+      this.renderEdges();
+    }
+  }
 
-          if (this.nodeHasAlert(node, alerts)) {
-            node.extra_classes = ['has-alert'];
-          } else if (
-            metrics.available_services &&
-            metrics.available_services.includes(node.service_id)
-          ) {
-            node.extra_classes = ['is-ok'];
+  handleDocumentClick(e) {}
+
+  handleSvgClicked(event) {
+    const { hoveredNode } = this.state;
+    const { shiftKey } = event;
+    const coords = d3.mouse(d3.event.target);
+
+    this.setState({ selectedNode: hoveredNode ? hoveredNode.id : null });
+
+    if (shiftKey) {
+      const x = coords[0] - 40;
+      const y = coords[1] - 40;
+
+      this.createNode(Rect.new(x, y, 'my.service'));
+    }
+
+    this.setState({
+      selectedEdge: null,
+    });
+
+    this.renderEdges();
+    this.renderNodes();
+  }
+
+  onUpdateNodePosition = (nodeData, newNodePos, pointerPos, shift) => {
+    const node = GraphUtils.getNodeByID(this.state.graph.nodes, nodeData.id);
+    const { draggingEdge } = this.state;
+
+    this.setState({
+      selectedEdge: null,
+      selectedNode: node.id,
+    });
+
+    if (!shift) {
+      if (draggingEdge) {
+        this.setState({ draggingEdge: false });
+        this.removeDraggingEdgeContainer(draggingEdge);
+      }
+
+      // here, we give control to the node to update other
+      // node/edges in the graph
+      if (node.type.hasOwnProperty('onUpdateNodeHook')) {
+        const g = node.type.onUpdateNodeHook(
+          this.state.graph,
+          nodeData,
+          newNodePos
+        );
+
+        this.setState({
+          graph: g,
+        });
+      }
+
+      Object.assign(node.bounds, { x: newNodePos.x, y: newNodePos.y });
+      this.renderNodes();
+      this.renderEdges();
+
+      return;
+    } else {
+      if (!draggingEdge) {
+        this.setState({
+          draggingEdge: null,
+        });
+      }
+
+      this.setState({
+        draggingEdge: Edge.new(
+          {
+            type: node.type,
+            id: node.id,
+          },
+          {
+            type: Pointer,
+            coords: {
+              x: pointerPos.x,
+              y: pointerPos.y,
+            },
+          }
+        ),
+      });
+    }
+
+    this.renderEdges();
+    this.renderNodes();
+  };
+
+  onNodeMouseOver = node => {
+    cancelAnimationFrame(this.hoverNodeTimeout);
+    this.hoverNodeTimeout = requestAnimationFrame(() => {
+      this.setState({ hoveredNode: node });
+    });
+  };
+  onNodeMouseOut = node => {
+    cancelAnimationFrame(this.hoverNodeTimeout);
+    this.hoverNodeTimeout = requestAnimationFrame(() => {
+      this.setState({ hoveredNode: null });
+    });
+  };
+
+  onNodeDragEnd = node => {
+    const { graph, draggingEdge, hoveredNode } = this.state;
+
+    const oldDragging = Object.assign({}, draggingEdge);
+
+    if (draggingEdge) {
+      if (hoveredNode) {
+        draggingEdge.target = {
+          type: hoveredNode.type,
+          id: hoveredNode.id,
+        };
+
+        if (hoveredNode.type.hasOwnProperty('getConnector')) {
+          const connector = hoveredNode.type.getConnector(hoveredNode);
+
+          if (!connector) {
+            console.warn(`must connect to service port`);
+            this.setState({
+              draggingEdge: null,
+            });
+            this.removeDraggingEdgeContainer(oldDragging);
+
+            return;
           }
 
-          return node;
-        })
-        // cluster nodes must be last in the stack
-        // otherwise referenced nodes are not rendered yet
-        .sort((a, b) => (a.type == 'cluster' ? 1 : -1)),
-    ];
+          draggingEdge.target.connector = connector.id;
+        }
+
+        // check if edge already exists
+        if (!this.edgeExists(draggingEdge)) {
+          graph.edges = [draggingEdge, ...graph.edges];
+        }
+      }
+
+      this.setState({
+        draggingEdge: null,
+        graph,
+      });
+      this.removeDraggingEdgeContainer(oldDragging);
+      this.renderEdges();
+    }
+  };
+
+  edgeExists(e) {
+    const { graph } = this.state;
 
     return (
-      <div id="graph" onMouseMove={this.onMouseMove.bind(this)}>
-        <Titlebar
-          availableStages={this.state.availableStages}
-          writeLocked={this.state.writeLocked}
-          selectedStage={this.state.selectedStage}
-          onChange={this.onChangeStage}
-          onAdd={this.onAddStage}
-          onUpdate={this.onUpdateStage}
-          onDelete={this.onDeleteStage}
-        />
+      graph.edges.find(edge => {
+        return (
+          edge.source.id == e.source.id &&
+          edge.target.id == e.target.id &&
+          edge.target.connector == e.target.connector &&
+          edge.source.connector == e.source.connector
+        );
+      }) !== undefined
+    );
+  }
+
+  onNodeDoubleClick = (node, x, y) => {
+    this.setState({
+      editorNode: node,
+    });
+  };
+
+  removeDraggingEdgeContainer(edge) {
+    const id = this.getEdgeContainerID(edge);
+    const container = document.getElementById(id);
+
+    if (container) {
+      container.remove();
+    }
+  }
+
+  createNode(node) {
+    const { graph } = this.state;
+
+    graph.nodes = [node, ...graph.nodes];
+    this.setState({ graph });
+    this.renderNodes();
+  }
+
+  modifyZoom = (modK = 0, modX = 0, modY = 0, dur = 0) => {
+    const parent = d3.select(this.viewWrapper.current).node();
+    const center = {
+      x: parent.clientWidth / 2,
+      y: parent.clientHeight / 2,
+    };
+    const extent = this.zoom.scaleExtent();
+    const viewTransform = this.state.viewTransform;
+
+    const next = {
+      k: viewTransform.k,
+      x: viewTransform.x,
+      y: viewTransform.y,
+    };
+
+    const targetZoom = next.k * (1 + modK);
+
+    next.k = targetZoom;
+
+    if (targetZoom < extent[0] || targetZoom > extent[1]) {
+      return false;
+    }
+
+    const translate0 = {
+      x: (center.x - next.x) / next.k,
+      y: (center.y - next.y) / next.k,
+    };
+
+    const l = {
+      x: translate0.x * next.k + next.x,
+      y: translate0.y * next.k + next.y,
+    };
+
+    next.x += center.x - l.x + modX;
+    next.y += center.y - l.y + modY;
+    this.setZoom(next.k, next.x, next.y, dur);
+
+    return true;
+  };
+
+  // Programmatically resets zoom
+  setZoom(k = 1, x = 0, y = 0, dur = 0) {
+    const t = d3.zoomIdentity.translate(x, y).scale(k);
+
+    d3.select(this.viewWrapper.current)
+      .select('svg')
+      .transition()
+      .duration(dur)
+      .call(this.zoom.transform, t);
+  }
+
+  handleZoomStart = event => {};
+
+  handleZoomToFit = () => {
+    const entities = d3.select(this.entities).node();
+
+    if (!entities) {
+      return;
+    }
+
+    let viewBBox = entities.getBBox();
+
+    if (entities.children.length == 0) {
+      viewBBox = {
+        x: this.background.width / 2,
+        y: this.background.height / 2,
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
+    }
+
+    this.handleZoomToFitImpl(viewBBox, this.props.zoomDur);
+  };
+
+  handleZoom = event => {
+    const transform = event.transform;
+
+    d3.select(this.view).attr('transform', transform);
+
+    // prevent re-rendering on zoom
+    if (this.state.viewTransform !== transform) {
+      this.setState({
+        viewTransform: transform,
+      });
+    }
+  };
+
+  handleZoomToFitImpl = (viewBBox, zoomDur = 0) => {
+    if (!this.viewWrapper.current) {
+      return;
+    }
+
+    const parent = d3.select(this.viewWrapper.current).node();
+    const width = parent.clientWidth;
+    const height = parent.clientHeight;
+    const minZoom = this.props.minZoom || 0;
+    const maxZoom = this.props.maxZoom || 2;
+
+    const next = {
+      k: (minZoom + maxZoom) / 2,
+      x: -width / 2,
+      y: -height / 2,
+    };
+
+    if (viewBBox.width > 0 && viewBBox.height > 0) {
+      // There are entities
+      const dx = viewBBox.width;
+      const dy = viewBBox.height;
+      const x = viewBBox.x + viewBBox.width / 2;
+      const y = viewBBox.y + viewBBox.height / 2;
+
+      next.k = 0.9 / Math.max(dx / width, dy / height);
+
+      if (next.k < minZoom) {
+        next.k = minZoom;
+      } else if (next.k > maxZoom) {
+        next.k = maxZoom;
+      }
+
+      next.x = width / 2 - next.k * x;
+      next.y = height / 2 - next.k * y;
+    }
+
+    this.setZoom(next.k, next.x, next.y, zoomDur);
+  };
+
+  renderView() {
+    this.selectedView.attr('transform', this.state.viewTransform);
+
+    clearTimeout(this.renderNodesTimeout);
+    this.renderNodesTimeout = setTimeout(this.renderNodes);
+
+    clearTimeout(this.renderEdgesTimeout);
+    this.renderEdgesTimeout = setTimeout(this.renderEdges);
+  }
+
+  renderNodes = () => {
+    if (!this.entities) {
+      return;
+    }
+
+    // we must render the cluster nodes AFTER all other
+    this.state.graph.nodes
+      .sort(n => (n.type == Cluster ? 1 : -1))
+      .forEach((node, i) => {
+        cancelAnimationFrame(this.nodeTimeouts[node.id]);
+        this.nodeTimeouts[node.id] = requestAnimationFrame(() => {
+          this.renderNode(node);
+        });
+      });
+  };
+
+  renderEdges = () => {
+    const { edges } = this.state.graph;
+    const { draggingEdge } = this.state;
+
+    if (!this.entities) {
+      return;
+    }
+
+    edges.forEach(edge => {
+      if (!edge.source) {
+        console.warn(`edge missing source`, edge);
+
+        return;
+      }
+
+      const timeoutId = `${edge.source.id}-${edge.source.connector}|${edge.target.id}-${edge.target.connector}`;
+
+      cancelAnimationFrame(this.edgeTimeouts[timeoutId]);
+      this.edgeTimeouts[timeoutId] = requestAnimationFrame(() => {
+        this.syncRenderEdge(edge);
+      });
+    });
+
+    if (draggingEdge) {
+      const tid = 'dragging-edge';
+
+      cancelAnimationFrame(this.edgeTimeouts[tid]);
+      this.edgeTimeouts[tid] = requestAnimationFrame(() => {
+        this.syncRenderEdge(draggingEdge);
+      });
+    }
+  };
+
+  renderNode(node) {
+    if (!this.entities) {
+      return null;
+    }
+
+    const { selectedNode } = this.state;
+
+    const highlightState = this.getHighlight(node);
+
+    const element = (
+      <node.type
+        node={node}
+        selected={selectedNode == node.id}
+        highlight={highlightState}
+        onUpdatePosition={this.onUpdateNodePosition}
+        onMouseOver={this.onNodeMouseOver}
+        onMouseOut={this.onNodeMouseOut}
+        onDoubleClick={this.onNodeDoubleClick}
+        onDragEnd={this.onNodeDragEnd}
+      />
+    );
+
+    const containerId = GraphUtils.getNodeContainerById(node.id);
+    let nodeContainer = document.getElementById(containerId);
+
+    if (!nodeContainer) {
+      nodeContainer = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'g'
+      );
+      nodeContainer.id = containerId;
+      const layer = GraphUtils.getRenderLayer(node.type);
+
+      this.renderLayer[layer].appendChild(nodeContainer);
+    }
+
+    ReactDOM.render(element, nodeContainer);
+  }
+
+  getHighlight(node) {
+    const { alerts, metrics } = this.props;
+
+    const hasAlert =
+      alerts.find(alert => alert.labels.service_id == node.name) !== undefined;
+
+    if (hasAlert) {
+      return 'alert';
+    }
+
+    return metrics.available_services &&
+      metrics.available_services.includes(node.name)
+      ? 'ok'
+      : '';
+  }
+
+  removeNodeByID(id) {
+    if (!id) {
+      return;
+    }
+
+    const { graph } = this.state;
+
+    // remove node from dom
+    const containerId = GraphUtils.getNodeContainerById(id);
+    const edgeContainer = document.getElementById(containerId);
+
+    if (!edgeContainer) {
+      console.warn(`trying to remove node with missing container`);
+
+      return;
+    }
+
+    // remove edges
+    graph.edges
+      .filter(edge => edge.source.id == id || edge.target.id == id)
+      .forEach(edge => this.removeEdgeByID(edge.id));
+
+    edgeContainer.remove();
+
+    // update state
+    graph.nodes = [...graph.nodes.filter(node => node.id != id)];
+    this.setState({ graph });
+  }
+
+  removeEdgeByID(id) {
+    if (!id) {
+      return;
+    }
+
+    const edge = GraphUtils.getEdgeByID(this.state.graph.edges, id);
+    const eci = this.getEdgeContainerID(edge);
+    const container = document.getElementById(eci);
+
+    if (!container) {
+      console.warn(`trying to remove edge with missing container`);
+
+      return;
+    }
+
+    container.remove();
+    const { graph } = this.state;
+
+    graph.edges = [...graph.edges.filter(edge => edge.id != id)];
+    this.setState({ graph });
+  }
+
+  syncRenderEdge(edge) {
+    // eslint-disable-next-line
+    const [sourceID, from] = this.getEdgeCoords('source', edge.source);
+    const [targetID, to] = this.getEdgeCoords('target', edge.target);
+    const id = `edge-${sourceID}-${targetID}`;
+
+    if (!edge.type) {
+      console.warn(`trying to render edge without type`, edge);
+    }
+
+    const element = (
+      <edge.type
+        edge={edge}
+        from={from}
+        to={to}
+        onClick={this.onClickEdge}
+        selected={this.state.selectedEdge == edge.id ? true : false}
+      />
+    );
+
+    this.renderEdge(id, element, edge);
+
+    // this allows to change the Node after edge is drawn
+    const ctr = edge.target.type;
+
+    if (ctr && ctr.hasOwnProperty('afterRenderEdge')) {
+      const node = GraphUtils.getNodeByID(
+        this.state.graph.nodes,
+        edge.target.id
+      );
+
+      ctr.afterRenderEdge(node, edge.target);
+    }
+  }
+
+  onClickEdge = edge => {
+    this.setState({ selectedEdge: edge.id });
+    this.renderEdges();
+  };
+
+  getEdgeContainerID(edge) {
+    const [sourceID] = this.getEdgeCoords('source', edge.source);
+    const [targetID] = this.getEdgeCoords('target', edge.target);
+
+    return `edge-${sourceID}-${targetID}-container`;
+  }
+
+  getEdgeCoords(point, edgeTarget) {
+    const node = GraphUtils.getNodeByID(this.state.graph.nodes, edgeTarget.id);
+    const edgeTargetID = edgeTarget.type.getEdgeTargetID(edgeTarget);
+    const coords = edgeTarget.type.getConnectorPosition(
+      node,
+      edgeTarget,
+      point
+    );
+
+    // TODO: add interface for and documentation
+    // the edge determines the connection points
+    // by calling static methods on the node class.
+    // The node class decides where a edge can
+    // connect and how it should behave.
+    // here we pass in the type information for the source/target node
+    coords.type = edgeTarget.type;
+
+    if (!edgeTargetID || !coords) {
+      console.warn(`edge target id not found`, edgeTarget);
+
+      return [0, 0];
+    }
+
+    return [edgeTargetID, coords];
+  }
+
+  renderEdge = (id, element, edge) => {
+    if (!this.entities) {
+      return null;
+    }
+
+    const containerId = GraphUtils.getNodeContainerById(id);
+    let edgeContainer = document.getElementById(containerId);
+
+    if (!edgeContainer) {
+      const newSvgEdgeContainer = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'g'
+      );
+
+      newSvgEdgeContainer.id = containerId;
+      this.renderLayer[LAYER_EDGE].prepend(newSvgEdgeContainer);
+      edgeContainer = newSvgEdgeContainer;
+    }
+
+    // ReactDOM.render replaces the insides of an element This renders the element
+    // into the edgeContainer
+    if (edgeContainer) {
+      ReactDOM.render(element, edgeContainer);
+    }
+  };
+
+  onNodeEditChange = (oldNode, node) => {
+    const graph = this.state.graph;
+    const i = GraphUtils.getNodeIndexById(graph.nodes, node.id);
+
+    graph.nodes[i] = node;
+
+    // create new reference
+    graph.nodes = [...this.state.graph.nodes];
+
+    this.setState({
+      graph: graph,
+      editorNode: null,
+      selectedNode: null,
+    });
+
+    this.renderNodes();
+  };
+
+  onNodeEditExit = () => {
+    this.setState({
+      editorNode: null,
+    });
+    this.renderNodes();
+  };
+
+  onChangeStage = (name, graph) => {
+    this.setState({
+      graph: graph,
+    });
+    this.clearStage();
+    this.renderNodes();
+    this.renderEdges();
+    setTimeout(() => {
+      this.handleZoomToFit();
+    }, 50);
+  };
+
+  clearStage() {
+    Object.keys(this.renderLayer).forEach(layer => {
+      for (let i = this.renderLayer[layer].children.length - 1; i >= 0; --i) {
+        this.renderLayer[layer].children[i].remove();
+      }
+    });
+  }
+
+  render() {
+    return (
+      <div className="app">
+        <Titlebar onChange={this.onChangeStage} graph={this.state.graph} />
         <NodeEditor
-          x={this.state.nodeEdtiorX}
-          y={this.state.nodeEdtiorY}
           onNodeEditChange={this.onNodeEditChange}
           onNodeEditExit={this.onNodeEditExit}
-          enabled={this.state.nodeEditEnabled}
-          node={this.state.selectedNode}
+          enabled={!!this.state.editorNode}
+          node={this.state.editorNode}
           nodes={this.state.graph.nodes}
         />
-        <GraphView
-          ref={el => (this.GraphView = el)}
-          nodeKey={NODE_KEY}
-          layoutEngineType={this.state.layoutEngine}
-          nodes={annotatedNodes}
-          edges={edges}
-          selected={this.state.selectedEntity}
-          nodeTypes={NodeTypes}
-          nodeSubtypes={NodeSubtypes}
-          edgeTypes={EdgeTypes}
-          onSelectNode={this.onSelectNode}
-          onCreateNode={this.onCreateNode}
-          onUpdateNode={this.onUpdateNode}
-          onDeleteNode={this.onDeleteNode}
-          onSelectEdge={this.onSelectEdge}
-          onCreateEdge={this.onCreateEdge}
-          readOnly={this.state.writeLocked}
-          onSwapEdge={this.onSwapEdge}
-          onDeleteEdge={this.onDeleteEdge}
-          renderNodeText={RenderNodeText}
-          renderNode={RenderNode}
-          afterRenderEdge={AfterRenderEdge}
-          gridSpacing={36}
-          gridDotSize={1}
-        />
+        <div className="view-wrapper" ref={this.viewWrapper}>
+          <svg className="graph">
+            <defs>
+              <marker
+                id="end-arrow"
+                viewBox={`0 -${10 / 2} ${10} ${10}`}
+                refX={`${10 / 2}`}
+                markerWidth={`${10}`}
+                markerHeight={`${10}`}
+                orient="auto"
+              >
+                <path
+                  className="arrow"
+                  d={`M0,-${10 / 2}L${10},0L0,${10 / 2}`}
+                />
+              </marker>
+              <pattern
+                id="grid"
+                key="grid"
+                width={32}
+                height={32}
+                patternUnits="userSpaceOnUse"
+              >
+                <circle fill="#999" cx={32 / 2} cy={32 / 2} r={1} />
+              </pattern>
+            </defs>
+            <g className="view" ref={el => (this.view = el)}>
+              <rect
+                className="background"
+                x={-this.background.width / 2}
+                y={-this.background.width / 2}
+                width={this.background.width}
+                height={this.background.height}
+                fill={`url(${'#grid'})`}
+              />
+              <g className="entities" ref={el => (this.entities = el)}>
+                {Object.keys(this.renderLayer).map(layer => {
+                  return (
+                    <g
+                      key={layer}
+                      className={'layer-' + layer}
+                      ref={el => (this.renderLayer[layer] = el)}
+                    ></g>
+                  );
+                })}
+              </g>
+            </g>
+          </svg>
+        </div>
       </div>
     );
   }
 }
 
-export default Graph;
+module.exports = Graph;

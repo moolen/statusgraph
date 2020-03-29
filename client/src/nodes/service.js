@@ -1,8 +1,8 @@
-//import * as d3 from 'd3';
+// @flow
 import * as React from 'react';
-import { GraphUtils } from 'react-digraph';
 import './service.scss';
-import Rect from './rect.js';
+import { Rect } from '../internal';
+import { v4 as uuidv4 } from 'uuid';
 
 class Service extends Rect {
   static defaultProps = {};
@@ -12,8 +12,12 @@ class Service extends Rect {
 
   state = {
     dragging: false,
-    hoveredPort: null,
+    hoveredConnector: null,
   };
+
+  static width = 300;
+  static height = 211;
+
   constructor(props) {
     super(props);
     this.nodeRef = React.createRef();
@@ -23,7 +27,63 @@ class Service extends Rect {
     };
   }
 
-  static getConnectorPosition(node, edgeTarget) {
+  static new(x, y, name) {
+    return {
+      id: uuidv4(),
+      type: Service,
+      name: name,
+      labels: [
+        'app.kubernetes.io/name=myapp',
+        'app.kubernetes.io/instance=canary',
+        'app.kubernetes.io/managed-by=helm',
+        'app.kubernetes.io/component=application',
+      ],
+      connector: [
+        {
+          id: uuidv4(),
+          label: '/api/v1/cats',
+          name: 'HTTP · DEPRECATED',
+        },
+        {
+          id: uuidv4(),
+          label: '/api/v2/awww',
+          name: 'grpc',
+        },
+        {
+          id: uuidv4(),
+          label: '/api/v2/puppies',
+          name: 'grpc',
+        },
+        {
+          id: uuidv4(),
+          label: '/api/v2/doggos',
+          name: 'grpc',
+        },
+        {
+          id: uuidv4(),
+          label: '/api/v2/bread',
+          name: 'grpc',
+        },
+      ],
+      bounds: {
+        x: x,
+        y: y,
+      },
+    };
+  }
+
+  static getConnectorPosition(node, edgeTarget, point) {
+    if (point == 'source') {
+      return {
+        x: node.bounds.x + Service.width + 27,
+        y: node.bounds.y + 24,
+        offset: {
+          x: 70,
+          y: 0,
+        },
+      };
+    }
+
     const connector = node.connector
       .map((p, i) => [i, p.id])
       .find(p => p[1] == edgeTarget.connector);
@@ -34,13 +94,25 @@ class Service extends Rect {
       return { x: 0, y: 0 };
     }
 
-    // port[0] is the index
-    const yOff = 52 + 18 + connector[0] * 36;
+    // conn[0] is the index
+    const yOff = Service.getConnectorOffset(connector[0]);
 
     return {
       x: node.bounds.x,
       y: node.bounds.y + yOff,
+      offset: {
+        x: -70,
+        y: 0,
+      },
     };
+  }
+
+  static getConnectorOffset(i) {
+    return 2 + 53 + 16 + i * 33;
+  }
+
+  static getEdgeTargetID(edgeTarget) {
+    return `${edgeTarget.connector}-${edgeTarget.id}`;
   }
 
   static getConnector(node) {
@@ -68,50 +140,45 @@ class Service extends Rect {
     });
   }
 
-  onPortMouseOver = port => {
-    this.setState({ hoveredPort: port.id });
+  onConnectorMouseOver = c => {
+    this.setState({ hoveredConnector: c.id });
   };
-  onPortMouseOut = port => {
-    this.setState({ hoveredPort: null });
+  onConnectorMouseOut = c => {
+    this.setState({ hoveredConnector: null });
   };
 
   render() {
     const { opacity, node } = this.props;
     const { x, y } = node.bounds ? node.bounds : this.state;
-    const { extra_classes } = node || [];
-    const className = GraphUtils.classNames(
-      'node',
-      extra_classes,
-      'service',
-      {}
-    );
 
     const coords = {
       x: x,
       y: y,
-      width: 300,
-      height: 211,
     };
 
-    const ports = node.connector;
+    const conn = node.connector;
+    const height = 2 + 53 + conn.length * 33 + 11 + node.labels.length * 13 + 2;
 
     return (
       <g
         id={node.id}
         ref={this.nodeRef}
-        className={className}
-        width={coords.width}
-        height={coords.height}
+        className="node-group"
+        width={Service.width}
+        height={height}
         opacity={opacity}
         transform={`translate(${coords.x}, ${coords.y})`}
         onMouseOver={this.handleMouseOver}
         onMouseOut={this.handleMouseOut}
-        //onClick={this.onClick.bind(this)}
         style={{
           transform: `matrix(1, 0, 0, 1, ${coords.x}, ${coords.y})`,
         }}
       >
-        <foreignObject width={coords.width + 30} height={coords.height}>
+        <foreignObject
+          className={'node service ' + this.props.highlight}
+          width={Service.width + 30}
+          height={height}
+        >
           <div className="service-wrapper">
             <div className="out-connector"></div>
             <div className="service-border">
@@ -125,24 +192,23 @@ class Service extends Rect {
                 </a>
               </header>
               <section className="service-port-wrapper">
-                {ports.map(port => {
+                {conn.map(c => {
                   return (
                     <div
-                      key={port.id}
-                      id={node.id + '-' + port.id + '-hoverstate'}
-                      onMouseOver={this.onPortMouseOver.bind(this, port)}
-                      onMouseOut={this.onPortMouseOut.bind(this, port)}
+                      key={c.id}
+                      id={node.id + '-' + c.id + '-hoverstate'}
+                      onMouseOver={this.onConnectorMouseOver.bind(this, c)}
+                      onMouseOut={this.onConnectorMouseOut.bind(this, c)}
                       className={
                         'service-protocol-wrapper ' +
-                        (this.state.hoveredPort == port.id ? 'hovered' : '')
+                        (this.state.hoveredConnector == c.id ? 'hovered' : '')
                       }
                     >
                       <header className="protocol-content">
                         <div className="protocol-label">
-                          <span className="protocol-port">{port.port}</span>
+                          <span className="protocol-lbl">{c.label}</span>
                           <span className="protocol-title">
-                            {port.proto.toUpperCase()} ·{' '}
-                            {port.name.toUpperCase()}
+                            {c.name.toUpperCase()}
                           </span>
                         </div>
                       </header>
@@ -151,33 +217,32 @@ class Service extends Rect {
                 })}
               </section>
               <section className="service-label-wrapper">
-                <span className="service-label">
-                  <span className="label-title">
-                    io.cilium.k8s.policy.cluster:default
-                  </span>
-                </span>
-                <span className="service-label">
-                  <span className="label-title">
-                    io.cilium.k8s.policy.serviceaccount:default
-                  </span>
-                </span>
+                {node.labels.map((label, i) => {
+                  return (
+                    <span key={label + i} className="service-label">
+                      <span className="label-title">{label}</span>
+                    </span>
+                  );
+                })}
               </section>
             </div>
           </div>
         </foreignObject>
         <g>
-          {ports.map((port, i) => {
+          {conn.map((c, i) => {
+            const yOff = Service.getConnectorOffset(i);
+
             return (
-              <g key={port.id} id={node.id + '-' + port.id + '-group'}>
+              <g key={c.id} id={node.id + '-' + c.id + '-group'}>
                 <path
-                  id={node.id + '-' + port.id + '-path'}
+                  id={node.id + '-' + c.id + '-path'}
                   className="proto-connector-line invisible"
-                  d={'M2,' + (52 + 18 + i * 36) + 'l18,0'}
+                  d={'M2,' + yOff + 'l18,0'}
                 />
                 <circle
-                  id={node.id + '-' + port.id + '-circle'}
+                  id={node.id + '-' + c.id + '-circle'}
                   cx={2}
-                  cy={52 + 18 + i * 36}
+                  cy={yOff}
                   r="4"
                   className="proto-connector invisible"
                 />
@@ -190,4 +255,7 @@ class Service extends Rect {
   }
 }
 
-export default Service;
+Service.SUPPORT_DYNAMIC_SOURCE_EDGE = true;
+Service.SUPPORT_DYNAMIC_TARGET_EDGE = true;
+
+export { Service };
