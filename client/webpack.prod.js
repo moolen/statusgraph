@@ -1,5 +1,6 @@
 const webpack = require('webpack');
 const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   mode: 'production',
@@ -84,6 +85,17 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify('production'),
     }),
+    new CopyWebpackPlugin([
+      {
+        from: './**/index.html',
+        to: 'index.html',
+        transform: function(content) {
+          return content
+            .toString()
+            .replace('src="./main.js"', 'src="./main.min.js"');
+        },
+      },
+    ]),
   ],
 
   externals: {
