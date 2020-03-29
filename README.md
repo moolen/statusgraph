@@ -1,7 +1,8 @@
 # Statusgraph
 A status page for your distributed system.
 
-![](./statusgraph.png)
+![](./statusgraph-svc.png)
+![](./statusgraph-shop.png)
 
 ## Overview
 This is a webapp that let's you visualize your system: create nodes and edges to draw your system architecture and signify dependencies. Annotate your services with Metrics and Alerts via `Prometheus` and `Alertmanager`.
