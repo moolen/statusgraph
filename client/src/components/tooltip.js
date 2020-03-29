@@ -1,17 +1,17 @@
 import * as React from 'react';
 import './tooltip.scss';
-import Sparkline from './sparkline';
+import { Sparkline, GraphUtils } from '../internal';
 
-class Tooltip extends React.Component {
+export class Tooltip extends React.Component {
   getMatchingAlerts() {
     const alerts = this.props.alerts || [];
     const node = this.props.node || {};
 
-    if (alerts.length == 0 || !node.service_id) {
+    if (alerts.length == 0 || !node.name) {
       return [];
     }
 
-    return alerts.filter(alert => alert.labels.service_id == node.service_id);
+    return alerts.filter(alert => alert.labels.service_id == node.name);
   }
 
   componentDidMount() {
@@ -23,8 +23,9 @@ class Tooltip extends React.Component {
     let alerts = this.getMatchingAlerts();
     const metrics = this.props.metrics;
     const id = this.props.node ? this.props.node.id : '';
-    const sid = this.props.node ? this.props.node.service_id : '';
-    const el = document.getElementById(`node-${id}`);
+    const sid = this.props.node ? this.props.node.name : '';
+    const containerId = GraphUtils.getNodeContainerById(id);
+    const el = document.getElementById(containerId);
     let viewMetrics = [];
 
     if (metrics && metrics.metrics && metrics.metrics[sid]) {
@@ -37,10 +38,7 @@ class Tooltip extends React.Component {
       return <div id="tooltip" className="empty" />;
     }
 
-    this.props.container.setAttribute(
-      'transform',
-      el.getAttribute('transform')
-    );
+    const bbox = el.getBBox();
 
     // remove certain labels
     alerts = alerts.map(x => {
@@ -49,10 +47,9 @@ class Tooltip extends React.Component {
 
       return x;
     });
-    const bbox = el.getBBox();
 
-    this.props.container.setAttribute('x', bbox.width / 2);
-    this.props.container.setAttribute('y', -(bbox.height / 2));
+    this.props.container.setAttribute('x', bbox.x + bbox.width);
+    this.props.container.setAttribute('y', bbox.y + bbox.height / 2 - 26);
     this.props.visible
       ? this.props.container.classList.add('visible')
       : this.props.container.classList.remove('visible');
@@ -93,5 +90,3 @@ class Tooltip extends React.Component {
     );
   }
 }
-
-export default Tooltip;

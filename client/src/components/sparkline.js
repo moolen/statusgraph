@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as d3 from 'd3';
 
-class Sparkline extends React.Component {
+export class Sparkline extends React.Component {
   static defaultProps = {
     width: 100,
     height: 16,
@@ -75,5 +75,3 @@ class Sparkline extends React.Component {
     return <div className="sparkline" ref={this.nodeRef}></div>;
   }
 }
-
-export default Sparkline;

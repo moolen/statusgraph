@@ -7,13 +7,22 @@
       margin: 0;
     }
 
+    &.port-row{
+      border-top: 1px solid #ccc;
+      display: block;
+      .port-input-wrap{
+        display: flex;
+        padding: 0 20px 0 20px;
+        margin: 0 0 10px 0;
+      }
+    }
+
     &.button-row {
       margin-top: 30px;
     }
 
     &.select-row{
       .selector{
-        height: 20px;
         width: 100%;
       }
       input{

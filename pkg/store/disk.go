@@ -2,6 +2,7 @@ package store
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -22,12 +23,11 @@ func NewDisk(dir string) *DiskStore {
 }
 
 func (d *DiskStore) Save(key string, data *Stage) error {
-	p, err := filepath.Abs(key)
-	if err != nil {
-		return err
+	if filepath.Dir(key) != "." {
+		return fmt.Errorf("attempted to write outside of data dir")
 	}
-	fn := path.Join(d.RootDir, p)
-	err = os.MkdirAll(filepath.Dir(fn), 0660)
+	fn := path.Join(d.RootDir, key)
+	err := os.MkdirAll(filepath.Dir(fn), 0660)
 	if err != nil {
 		return err
 	}

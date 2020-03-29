@@ -3,7 +3,6 @@ import * as ReactDOM from 'react-dom';
 import { BrowserRouter as Router, Route } from 'react-router-dom';
 
 import Graph from './graph.jsx';
-
 import './app.scss';
 
 class App extends React.Component {

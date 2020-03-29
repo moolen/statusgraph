@@ -1,37 +1,49 @@
 import * as React from 'react';
 import './node-editor.scss';
 import Select from 'react-select';
-import { nodeTypes } from '../graph-config';
+import { v4 as uuidv4 } from 'uuid';
 
-class NodeEditor extends React.Component {
-  serviceIDInput = null;
-  typeInput = null;
+import { nodeTypes, GraphUtils } from '../internal';
+
+export class NodeEditor extends React.Component {
+  nameInput = null;
   constructor(props) {
     super(props);
+    const node = props.node || {};
+
     this.state = {
+      labelInput: '',
       editValues: {
-        service_id: props.node.service_id || '',
-        title: props.node.title || '',
-        type: props.node.type || '',
-        children: props.node.children || [],
+        id: node.id || '',
+        name: node.name || '',
+        namespace: node.namespace || '',
+        type: GraphUtils.nodeTypeToString(node.type) || '',
+        connector: node.connector || [],
+        children: node.children || [],
+        labels: node.labels || [],
       },
     };
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
     if (
-      this.props.node.service_id !== undefined &&
+      this.props.node &&
+      this.props.node.id !== undefined &&
       this.props.node != prevProps.node
     ) {
       this.setState({
+        labelInput: '',
         editValues: {
-          service_id: this.props.node.service_id || '',
-          type: this.props.node.type || '',
+          id: this.props.node.id || '',
+          type: GraphUtils.nodeTypeToString(this.props.node.type) || '',
+          connector: this.props.node.connector || [],
           children: this.props.node.children || [],
-          title: this.props.node.title || '',
+          labels: this.props.node.labels || [],
+          name: this.props.node.name || '',
+          namespace: this.props.node.namespace || '',
         },
       });
-      this.serviceIDInput.focus();
+      this.nameInput.focus();
     }
   }
 
@@ -41,6 +53,8 @@ class NodeEditor extends React.Component {
 
       return;
     }
+
+    e.stopPropagation();
   }
 
   handleTextChange(e) {
@@ -59,6 +73,10 @@ class NodeEditor extends React.Component {
       this.state.editValues.children.length == 0
     ) {
       errors.push('children can not be empty');
+    }
+
+    if (!this.state.editValues.type) {
+      errors.push('type can not be empty');
     }
 
     if (errors.length > 0) {
@@ -83,6 +101,8 @@ class NodeEditor extends React.Component {
     Object.assign(oldNode, this.props.node);
     Object.assign(newNode, this.props.node, this.state.editValues);
 
+    newNode.type = GraphUtils.nodeStringToType(newNode.type);
+
     if (this.props.onNodeEditChange) {
       this.props.onNodeEditChange(oldNode, newNode);
     }
@@ -106,6 +126,41 @@ class NodeEditor extends React.Component {
     this.setState({ editValues: v });
   };
 
+  handleLabelInputChange = labelInput => {
+    this.setState({ labelInput });
+  };
+
+  handleLabelChange = labels => {
+    const v = this.state.editValues;
+
+    if (labels == null) {
+      v.labels = [];
+    } else {
+      v.labels = labels.map(x => x.value);
+    }
+
+    this.setState({ editValues: v });
+  };
+
+  handleLabelKeyDown = e => {
+    const ev = this.state.editValues;
+
+    switch (e.key) {
+      case 'Enter':
+      case 'Tab':
+        if (!ev.labels.includes(e.target.value)) {
+          ev.labels.push(e.target.value);
+        }
+
+        this.setState({
+          labelInput: '',
+          editValues: ev,
+        });
+
+        e.preventDefault();
+    }
+  };
+
   handleTypeChange = type => {
     const v = this.state.editValues;
 
@@ -115,61 +170,95 @@ class NodeEditor extends React.Component {
       v.children = [];
     }
 
+    if (v.type != 'service') {
+      v.labels = [];
+    }
+
     this.setState({ editValues: v });
   };
 
-  render() {
-    const style = {
-      left: this.props.x + 20,
-      top: this.props.y + 20,
-    };
+  handleConnectorTextChange = (i, e) => {
     const ev = this.state.editValues;
 
-    const allChildren = this.props.nodes
-      .filter(node => node.type != 'cluster')
-      .filter(node => node.id != this.props.node.id)
-      .map(node => {
-        return {
-          value: node.id,
-          label: node.title || node.service_id || node.id,
-        };
-      });
+    const key = e.target.getAttribute('name');
+
+    ev.connector[i][key] = e.target.value;
+
+    this.setState({ editValues: ev });
+  };
+
+  onClickAddConnector = () => {
+    const ev = this.state.editValues;
+
+    ev.connector.push({
+      id: uuidv4(),
+      label: '',
+      name: '',
+    });
+    this.setState({ editValues: ev });
+  };
+
+  render() {
+    const ev = this.state.editValues;
+
+    const allChildren = this.props.node
+      ? this.props.nodes
+          .filter(node => node.id != this.props.node.id)
+          .map(node => {
+            return {
+              value: node.id,
+              label: node.name || node.id || node.id,
+            };
+          })
+      : [];
     const selectedChildren = allChildren.filter(x =>
       ev.children.includes(x.value)
     );
 
+    const labels = ev.labels.map(v => {
+      return { label: v, value: v };
+    });
+
     return (
       <div
         className={'form node-editor ' + (this.props.enabled ? 'enabled' : '')}
-        style={style}
       >
-        <div className="left-arrow"></div>
+        {/* <div className="form-row">
+          <label>ID</label>
+          <input
+            type="text"
+
+            onKeyDown={this.handleInputKeydown.bind(this)}
+            onChange={this.handleTextChange.bind(this)}
+            name="id"
+            value={ev.id}
+          />
+        </div> */}
         <div className="form-row">
-          <label>Service ID</label>
+          <label>Name</label>
           <input
             type="text"
             ref={input => {
-              this.serviceIDInput = input;
+              this.nameInput = input;
             }}
             onKeyDown={this.handleInputKeydown.bind(this)}
             onChange={this.handleTextChange.bind(this)}
-            name="service_id"
-            value={ev.service_id}
+            name="name"
+            value={ev.name}
           />
         </div>
-        <div className="form-row">
-          <label>Title</label>
-          <input
-            type="text"
-            ref={input => {
-              this.titleInput = input;
-            }}
-            onKeyDown={this.handleInputKeydown.bind(this)}
-            onChange={this.handleTextChange.bind(this)}
-            name="title"
-            value={ev.title}
-          />
-        </div>
+        {ev.type == 'service' && (
+          <div className="form-row">
+            <label>Namespace</label>
+            <input
+              type="text"
+              onKeyDown={this.handleInputKeydown.bind(this)}
+              onChange={this.handleTextChange.bind(this)}
+              name="namespace"
+              value={ev.namespace}
+            />
+          </div>
+        )}
         <div className="form-row select-row">
           <label>Type</label>
           <Select
@@ -181,6 +270,70 @@ class NodeEditor extends React.Component {
             })}
           />
         </div>
+        {ev.type == 'service' && (
+          <div className="service-form-wrapper">
+            <div className="connector-wrapper">
+              <div className="connector-list">
+                {ev.connector.map((conn, i) => {
+                  return (
+                    <div key={conn.id} className="form-row port-row">
+                      <label>Connector {i + 1}</label>
+                      <div className="port-input-wrap">
+                        <label>Label</label>
+                        <input
+                          type="text"
+                          onChange={this.handleConnectorTextChange.bind(
+                            this,
+                            i
+                          )}
+                          name="label"
+                          value={conn.label}
+                        />
+                      </div>
+                      <div className="port-input-wrap">
+                        <label>Description</label>
+                        <input
+                          type="text"
+                          onChange={this.handleConnectorTextChange.bind(
+                            this,
+                            i
+                          )}
+                          name="name"
+                          value={conn.name}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <button
+                className="btn add-connector"
+                onClick={this.onClickAddConnector}
+              >
+                add connector
+              </button>
+            </div>
+            <div className="label-wrapper">
+              <div className="form-row select-row">
+                <label>Labels</label>
+                <Select
+                  className="selector"
+                  isClearable
+                  isMulti
+                  menuIsOpen={false}
+                  inputValue={this.state.labelInput}
+                  value={labels}
+                  onInputChange={this.handleLabelInputChange}
+                  onChange={this.handleLabelChange}
+                  onKeyDown={this.handleLabelKeyDown}
+                  components={{
+                    DropdownIndicator: null,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
         {ev.type == 'cluster' && (
           <div className="form-row select-row">
             <label>Children</label>
@@ -206,5 +359,3 @@ class NodeEditor extends React.Component {
     );
   }
 }
-
-export default NodeEditor;

@@ -1,11 +1,10 @@
 import * as d3 from 'd3';
 import * as React from 'react';
-import { GraphUtils } from 'react-digraph';
+import { v4 as uuidv4 } from 'uuid';
+import { GraphUtils } from '../internal';
 
-class Cluster extends React.Component {
-  static defaultProps = {};
+export class Cluster extends React.Component {
   nodeRef;
-  oldSibling;
   padding = 20;
 
   state = {
@@ -17,30 +16,59 @@ class Cluster extends React.Component {
     },
     dragging: false,
   };
+
   constructor(props) {
     super(props);
     this.nodeRef = React.createRef();
   }
 
-  toBackground() {
-    if (!this.nodeRef.current) {
-      return;
+  static new(name, children) {
+    return {
+      id: uuidv4(),
+      type: Cluster,
+      name: name,
+      connector: [],
+      children: children,
+      bounds: {
+        x: null,
+        y: null,
+      },
+    };
+  }
+
+  static onUpdateNodeHook(graph, node, pos) {
+    node.children.forEach(c => {
+      const i = GraphUtils.getNodeIndexById(graph.nodes, c);
+      const n = graph.nodes[i];
+
+      n.bounds.x += pos.dx;
+      n.bounds.y += pos.dy;
+      graph.nodes[i] = n;
+    });
+
+    graph.nodes = [...graph.nodes];
+
+    return graph;
+  }
+
+  static isClusterContainer(container) {
+    if (
+      container.children.length > 0 &&
+      container.children[0].children.length > 0
+    ) {
+      return container.children[0].children[0].classList.contains(
+        'cluster-shape'
+      );
     }
 
-    if (!this.oldSibling) {
-      this.oldSibling = this.nodeRef.current.parentElement.nextSibling;
-    }
-
-    this.nodeRef.current.parentElement.parentElement.prepend(
-      this.nodeRef.current.parentElement
-    );
+    return false;
   }
 
   componentDidMount() {
     this.toBackground();
-
     // disable dblclick to prevent zoom
     d3.select(this.nodeRef.current).on('dblclick', () => {
+      this.props.onDoubleClick(this.props.node, d3.event.pageX, d3.event.pageY);
       d3.event.stopPropagation();
     });
 
@@ -58,7 +86,22 @@ class Cluster extends React.Component {
     d3.select(this.nodeRef.current).call(dragFunction);
   }
 
+  toBackground() {
+    if (!this.nodeRef.current) {
+      return;
+    }
+
+    if (!this.oldSibling) {
+      this.oldSibling = this.nodeRef.current.parentElement.nextSibling;
+    }
+
+    this.nodeRef.current.parentElement.parentElement.prepend(
+      this.nodeRef.current.parentElement
+    );
+  }
+
   handleMouseMove = event => {
+    const { onUpdatePosition } = this.props;
     const { bounds } = this.state;
     const { pointerOffset } = this.state;
     const newState = {
@@ -79,13 +122,25 @@ class Cluster extends React.Component {
     newState.bounds.y -= newState.pointerOffset.y;
 
     this.setState(newState);
+
+    onUpdatePosition(
+      this.props.node,
+      {
+        x: newState.bounds.x,
+        y: newState.bounds.y,
+        dx: newState.bounds.x - bounds.x,
+        dy: newState.bounds.y - bounds.y,
+      },
+      null,
+      false
+    );
   };
 
   handleDragStart = () => {
     this.setState({ dragging: true });
   };
 
-  static getClusterBounds(clusterNode, nodeTypes) {
+  static getClusterBounds(clusterNode) {
     const bounds = {
       min: {
         x: 99999999,
@@ -97,33 +152,42 @@ class Cluster extends React.Component {
       },
     };
 
-    clusterNode.children.forEach(node => {
-      const nodeElem = document.getElementById(`node-${node}-container`);
+    clusterNode.children.forEach(nodeId => {
+      const containerId = GraphUtils.getNodeContainerById(nodeId);
+      const nodeElem = document.getElementById(containerId);
 
       if (!nodeElem) {
-        console.warn(`calc cluster bounds: cannot find node with id: ${node}`);
+        console.warn(
+          `calc cluster bounds: cannot find node with id: ${nodeId}`
+        );
 
         return;
       }
 
+      // cluster elements should get some extra padding
       const bb = nodeElem.getBBox();
       const maxX = bb.x + bb.width;
       const maxY = bb.y + bb.height;
+      let pad = 0;
+
+      if (Cluster.isClusterContainer(nodeElem)) {
+        pad = 5;
+      }
 
       if (bb.x < bounds.min.x) {
-        bounds.min.x = bb.x;
+        bounds.min.x = bb.x - pad;
       }
 
       if (bb.y < bounds.min.y) {
-        bounds.min.y = bb.y;
+        bounds.min.y = bb.y - pad;
       }
 
       if (maxX > bounds.max.x) {
-        bounds.max.x = maxX;
+        bounds.max.x = maxX + pad;
       }
 
       if (maxY > bounds.max.y) {
-        bounds.max.y = maxY;
+        bounds.max.y = maxY + pad;
       }
     });
 
@@ -135,8 +199,8 @@ class Cluster extends React.Component {
       return;
     }
 
-    const { bounds, initialBounds } = this.state;
-    const { data, nodeKey, onNodeUpdate } = this.props;
+    const { bounds } = this.state;
+    const { node, onUpdatePosition } = this.props;
 
     this.setState({
       initialBounds: bounds,
@@ -144,26 +208,28 @@ class Cluster extends React.Component {
       dragging: false,
     });
 
-    onNodeUpdate(
+    onUpdatePosition(
+      node,
       {
         x: bounds.x,
         y: bounds.y,
-        dx: bounds.x - initialBounds.x,
-        dy: bounds.y - initialBounds.y,
+        dx: 0,
+        dy: 0,
       },
-      data[nodeKey],
+      null,
       false
     );
   };
 
-  onClick(e) {
-    const { data, onNodeSelected, nodeKey } = this.props;
-
-    onNodeSelected(data, data[nodeKey], false, e);
-  }
+  handleMouseOver = () => {
+    this.props.onMouseOver(this.props.node);
+  };
+  handleMouseOut = () => {
+    this.props.onMouseOut(this.props.node);
+  };
 
   renderText(coords) {
-    const { title } = this.props.data;
+    const { name } = this.props.node;
     const lineOffset = 14;
 
     return (
@@ -177,12 +243,12 @@ class Cluster extends React.Component {
         }}
       >
         <text textAnchor="middle">
-          {title && (
+          {name && (
             <tspan x={0} dy={lineOffset} fontSize="10px">
-              {title}
+              {name}
             </tspan>
           )}
-          {title && <title>{title}</title>}
+          {name && <title>{name}</title>}
         </text>
       </g>
     );
@@ -193,8 +259,15 @@ class Cluster extends React.Component {
       return null;
     }
 
-    const { data, nodeTypes } = props;
-    const clusterBounds = Cluster.getClusterBounds(data, nodeTypes);
+    const { node } = props;
+
+    if (!node.children || node.children.length == null) {
+      console.warn(`cluster can not have 0 children`, node);
+
+      return;
+    }
+
+    const clusterBounds = Cluster.getClusterBounds(node);
     const bounds = {
       x: clusterBounds.min.x,
       y: clusterBounds.min.y,
@@ -209,15 +282,8 @@ class Cluster extends React.Component {
   }
 
   render() {
-    const { opacity, id, data } = this.props;
-    const { extra_classes } = data;
+    const { opacity, id } = this.props;
     const { bounds } = this.state;
-    const className = GraphUtils.classNames(
-      'node',
-      extra_classes,
-      data.type,
-      {}
-    );
 
     const coords = {
       x: bounds.x - this.padding,
@@ -230,19 +296,22 @@ class Cluster extends React.Component {
       <g
         id={id}
         ref={this.nodeRef}
-        className={className}
+        className={'node-group'}
         width={coords.width}
         height={coords.height}
         opacity={opacity}
         transform={`translate(${coords.x}, ${coords.y})`}
-        onClick={this.onClick.bind(this)}
         style={{
           transform: `matrix(1, 0, 0, 1, ${coords.x}, ${coords.y})`,
         }}
+        onMouseOver={this.handleMouseOver}
+        onMouseOut={this.handleMouseOut}
       >
         <g className="cluster-shape">
           <rect
-            className={'cluster'}
+            className={
+              'node cluster ' + (this.props.selected ? 'selected' : '')
+            }
             width={coords.width}
             height={coords.height}
           />
@@ -252,5 +321,3 @@ class Cluster extends React.Component {
     );
   }
 }
-
-export default Cluster;
