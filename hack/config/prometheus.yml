@@ -60,6 +60,6 @@ scrape_configs:
       - targets: ['payment.svc:9100']
         labels:
           service_id: payment.svc
-      - targets: ['rabbitmq.svc:9100']
+      - targets: ['customer.svc:9100']
         labels:
-          service_id: rabbitmq.svc
+          service_id: customer.svc

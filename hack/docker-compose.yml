@@ -64,6 +64,6 @@ services:
   payment.svc:
     image: prom/node-exporter
     restart: always
-  rabbitmq.svc:
+  customer.svc:
     image: prom/node-exporter
     restart: always
