@@ -544,6 +544,8 @@ class Graph extends DebugComponent {
       />
     );
 
+    // TODO: if we change the node type we must ensure that
+    //       its container will be moved to the appropriate layer
     const containerId = GraphUtils.getNodeContainerById(node.id);
     let nodeContainer = document.getElementById(containerId);
 
