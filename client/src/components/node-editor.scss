@@ -11,16 +11,30 @@
   border: 1px solid #ccc;
   border-radius: 2px;
   box-shadow: 1px 1px 5px #cccccc;
-  max-height: 100%;
   //overflow-y: auto; // meh
   &.enabled{
     display: block;
   }
 }
 
-.port-wrapper{
+.connector-wrapper{
   border-bottom: 1px solid #ccc;
-    padding-bottom: 20px;
+  padding-bottom: 20px;
+
+  .connector-list{
+    max-height: 260px;
+    overflow-y: auto;
+    border-bottom: 1px solid #ccc;
+  }
+  .btn.add-connector{
+    width: 100%;
+    margin-top: 20px;
+  }
+}
+
+.label-wrapper{
+  padding: 10px 0 10px 0;
+  border-bottom: 1px solid #ccc;
 }
 
 .left-arrow {

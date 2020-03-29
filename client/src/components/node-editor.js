@@ -6,12 +6,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { nodeTypes, GraphUtils } from '../internal';
 
 export class NodeEditor extends React.Component {
-  idInput = null;
+  nameInput = null;
   constructor(props) {
     super(props);
     const node = props.node || {};
 
     this.state = {
+      labelInput: '',
       editValues: {
         id: node.id || '',
         name: node.name || '',
@@ -19,6 +20,7 @@ export class NodeEditor extends React.Component {
         type: GraphUtils.nodeTypeToString(node.type) || '',
         connector: node.connector || [],
         children: node.children || [],
+        labels: node.labels || [],
       },
     };
   }
@@ -30,16 +32,18 @@ export class NodeEditor extends React.Component {
       this.props.node != prevProps.node
     ) {
       this.setState({
+        labelInput: '',
         editValues: {
           id: this.props.node.id || '',
           type: GraphUtils.nodeTypeToString(this.props.node.type) || '',
           connector: this.props.node.connector || [],
           children: this.props.node.children || [],
+          labels: this.props.node.labels || [],
           name: this.props.node.name || '',
           namespace: this.props.node.namespace || '',
         },
       });
-      this.idInput.focus();
+      this.nameInput.focus();
     }
   }
 
@@ -122,6 +126,41 @@ export class NodeEditor extends React.Component {
     this.setState({ editValues: v });
   };
 
+  handleLabelInputChange = labelInput => {
+    this.setState({ labelInput });
+  };
+
+  handleLabelChange = labels => {
+    const v = this.state.editValues;
+
+    if (labels == null) {
+      v.labels = [];
+    } else {
+      v.labels = labels.map(x => x.value);
+    }
+
+    this.setState({ editValues: v });
+  };
+
+  handleLabelKeyDown = e => {
+    const ev = this.state.editValues;
+
+    switch (e.key) {
+      case 'Enter':
+      case 'Tab':
+        if (!ev.labels.includes(e.target.value)) {
+          ev.labels.push(e.target.value);
+        }
+
+        this.setState({
+          labelInput: '',
+          editValues: ev,
+        });
+
+        e.preventDefault();
+    }
+  };
+
   handleTypeChange = type => {
     const v = this.state.editValues;
 
@@ -129,6 +168,10 @@ export class NodeEditor extends React.Component {
 
     if (v.type != 'cluster') {
       v.children = [];
+    }
+
+    if (v.type != 'service') {
+      v.labels = [];
     }
 
     this.setState({ editValues: v });
@@ -172,27 +215,32 @@ export class NodeEditor extends React.Component {
       ev.children.includes(x.value)
     );
 
+    const labels = ev.labels.map(v => {
+      return { label: v, value: v };
+    });
+
     return (
       <div
         className={'form node-editor ' + (this.props.enabled ? 'enabled' : '')}
       >
-        <div className="form-row">
+        {/* <div className="form-row">
           <label>ID</label>
           <input
             type="text"
-            ref={input => {
-              this.idInput = input;
-            }}
+
             onKeyDown={this.handleInputKeydown.bind(this)}
             onChange={this.handleTextChange.bind(this)}
             name="id"
             value={ev.id}
           />
-        </div>
+        </div> */}
         <div className="form-row">
-          <label>name</label>
+          <label>Name</label>
           <input
             type="text"
+            ref={input => {
+              this.nameInput = input;
+            }}
             onKeyDown={this.handleInputKeydown.bind(this)}
             onChange={this.handleTextChange.bind(this)}
             name="name"
@@ -201,7 +249,7 @@ export class NodeEditor extends React.Component {
         </div>
         {ev.type == 'service' && (
           <div className="form-row">
-            <label>namespace</label>
+            <label>Namespace</label>
             <input
               type="text"
               onKeyDown={this.handleInputKeydown.bind(this)}
@@ -223,38 +271,67 @@ export class NodeEditor extends React.Component {
           />
         </div>
         {ev.type == 'service' && (
-          <div className="port-wrapper">
-            {ev.connector.map((conn, i) => {
-              return (
-                <div key={conn.id} className="form-row port-row">
-                  <label>Connector {i + 1}</label>
-                  <div className="port-input-wrap">
-                    <label>Label</label>
-                    <input
-                      type="text"
-                      onChange={this.handleConnectorTextChange.bind(this, i)}
-                      name="label"
-                      value={conn.label}
-                    />
-                  </div>
-                  <div className="port-input-wrap">
-                    <label>Name</label>
-                    <input
-                      type="text"
-                      onChange={this.handleConnectorTextChange.bind(this, i)}
-                      name="name"
-                      value={conn.name}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-            <button
-              className="btn add-connector"
-              onClick={this.onClickAddConnector}
-            >
-              add connector
-            </button>
+          <div className="service-form-wrapper">
+            <div className="connector-wrapper">
+              <div className="connector-list">
+                {ev.connector.map((conn, i) => {
+                  return (
+                    <div key={conn.id} className="form-row port-row">
+                      <label>Connector {i + 1}</label>
+                      <div className="port-input-wrap">
+                        <label>Label</label>
+                        <input
+                          type="text"
+                          onChange={this.handleConnectorTextChange.bind(
+                            this,
+                            i
+                          )}
+                          name="label"
+                          value={conn.label}
+                        />
+                      </div>
+                      <div className="port-input-wrap">
+                        <label>Description</label>
+                        <input
+                          type="text"
+                          onChange={this.handleConnectorTextChange.bind(
+                            this,
+                            i
+                          )}
+                          name="name"
+                          value={conn.name}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <button
+                className="btn add-connector"
+                onClick={this.onClickAddConnector}
+              >
+                add connector
+              </button>
+            </div>
+            <div className="label-wrapper">
+              <div className="form-row select-row">
+                <label>Labels</label>
+                <Select
+                  className="selector"
+                  isClearable
+                  isMulti
+                  menuIsOpen={false}
+                  inputValue={this.state.labelInput}
+                  value={labels}
+                  onInputChange={this.handleLabelInputChange}
+                  onChange={this.handleLabelChange}
+                  onKeyDown={this.handleLabelKeyDown}
+                  components={{
+                    DropdownIndicator: null,
+                  }}
+                />
+              </div>
+            </div>
           </div>
         )}
         {ev.type == 'cluster' && (

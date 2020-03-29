@@ -156,8 +156,9 @@ class Service extends Rect {
       y: y,
     };
 
-    const conn = node.connector;
-    const height = 2 + 53 + conn.length * 33 + 11 + node.labels.length * 13 + 2;
+    const conn = node.connector || [];
+    const labels = node.labels || [];
+    const height = 2 + 53 + conn.length * 33 + 11 + labels.length * 13 + 2;
 
     return (
       <g
@@ -187,9 +188,13 @@ class Service extends Rect {
                   <h3 className="name">{node.name}</h3>
                   <h4 className="namespace">{node.namespace}</h4>
                 </hgroup>
-                <a href="#" className="service-settings">
+                {/* <a href="#" className="service-settings">
                   <i className="fa fa-cog"></i>
-                </a>
+                </a> */}
+                <a
+                  href="#"
+                  className={'service-status ' + this.props.highlight}
+                ></a>
               </header>
               <section className="service-port-wrapper">
                 {conn.map(c => {
@@ -216,15 +221,17 @@ class Service extends Rect {
                   );
                 })}
               </section>
-              <section className="service-label-wrapper">
-                {node.labels.map((label, i) => {
-                  return (
-                    <span key={label + i} className="service-label">
-                      <span className="label-title">{label}</span>
-                    </span>
-                  );
-                })}
-              </section>
+              {labels.length > 0 && (
+                <section className="service-label-wrapper">
+                  {labels.map((label, i) => {
+                    return (
+                      <span key={label + i} className="service-label">
+                        <span className="label-title">{label}</span>
+                      </span>
+                    );
+                  })}
+                </section>
+              )}
             </div>
           </div>
         </foreignObject>
