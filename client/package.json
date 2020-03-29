@@ -73,6 +73,7 @@
     "html-react-parser": "^0.6.1",
     "kld-affine": "2.0.4",
     "kld-intersections": "^0.4.3",
+    "lodash.clonedeep": "^4.5.0",
     "react": "^16.13.0",
     "react-digraph": "^6.6.4",
     "react-select": "^3.0.8",

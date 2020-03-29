@@ -34,7 +34,7 @@ class MyNode extends React.Component{
    * @param {Object} node the node data
    * @param {Object} edgeTarget edge target connector
    * @param {String} point indicates the `source` or `target` point of the edge
-   * @returns {Object} {x int, y int, offset: { x int, y int }}
+   * @returns {Object|null} {x int, y int, offset: { x int, y int }} return null to indicate that connection is not possible
    */
   static getConnectorPosition(node, edgeTarget, point) {
     return {

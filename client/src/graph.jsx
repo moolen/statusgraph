@@ -1,15 +1,11 @@
 import * as d3 from 'd3';
 import ReactDOM from 'react-dom';
 import * as React from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import './graph.scss';
 import DebugComponent from './lib/debug-component';
 import {
   Rect,
-  Diamond,
   Cluster,
-  Service,
-  Poly,
   Pointer,
   Edge,
   Titlebar,
@@ -19,22 +15,6 @@ import {
 } from './internal';
 
 import { RenderLayerMap, LAYER_EDGE } from './config';
-
-const n1 = Rect.new(100, 100, 'cart.svc');
-const n2 = Diamond.new(0, 0, 'cart-db.svc');
-const n3 = Poly.new(0, 200, 'orders.svc');
-const n4 = Service.new(300, 100, 'API Gateway');
-const c = Cluster.new('orders.svc', [n1.id, n2.id, n3.id]);
-const e = Edge.new(
-  {
-    type: Rect,
-    id: n1.id,
-  },
-  {
-    type: Diamond,
-    id: n2.id,
-  }
-);
 
 class Graph extends DebugComponent {
   static defaultProps = {
@@ -50,10 +30,10 @@ class Graph extends DebugComponent {
     writeLocked: false,
     editorNode: null,
     graph: {
-      id: uuidv4(),
-      name: 'example',
-      edges: [e],
-      nodes: [c, n1, n2, n3, n4],
+      id: '',
+      name: '',
+      edges: [],
+      nodes: [],
     },
   };
 
@@ -75,6 +55,7 @@ class Graph extends DebugComponent {
     this.viewWrapper = React.createRef();
     this.view = React.createRef();
 
+    // TODO remove debug
     window.gr = this;
   }
 
@@ -493,6 +474,13 @@ class Graph extends DebugComponent {
     // we must render the cluster nodes AFTER all other
     this.state.graph.nodes
       .sort(n => (n.type == Cluster ? 1 : -1))
+      .sort((a, b) => {
+        if (a.type == Cluster && b.type == Cluster) {
+          return a.children.length > b.children.length ? 1 : -1;
+        }
+
+        return 1;
+      })
       .forEach((node, i) => {
         cancelAnimationFrame(this.nodeTimeouts[node.id]);
         this.nodeTimeouts[node.id] = requestAnimationFrame(() => {
@@ -613,6 +601,14 @@ class Graph extends DebugComponent {
 
     edgeContainer.remove();
 
+    graph.nodes = graph.nodes.map(node => {
+      if (node.children && node.children.includes(id)) {
+        node.children = node.children.filter(cid => cid != id);
+      }
+
+      return node;
+    });
+
     // update state
     graph.nodes = [...graph.nodes.filter(node => node.id != id)];
     this.setState({ graph });
@@ -645,6 +641,12 @@ class Graph extends DebugComponent {
     const [sourceID, from] = this.getEdgeCoords('source', edge.source);
     const [targetID, to] = this.getEdgeCoords('target', edge.target);
     const id = `edge-${sourceID}-${targetID}`;
+
+    if (sourceID === false || targetID === false) {
+      console.warn(`connection not possible`);
+
+      return;
+    }
 
     if (!edge.type) {
       console.warn(`trying to render edge without type`, edge);
@@ -696,6 +698,10 @@ class Graph extends DebugComponent {
       point
     );
 
+    if (coords == null) {
+      return [false, false];
+    }
+
     // TODO: add interface for and documentation
     // the edge determines the connection points
     // by calling static methods on the node class.
@@ -746,7 +752,22 @@ class Graph extends DebugComponent {
     graph.nodes[i] = node;
 
     // create new reference
-    graph.nodes = [...this.state.graph.nodes];
+    graph.nodes = [...graph.nodes];
+
+    // update edges
+    graph.edges = [
+      ...graph.edges.map(edge => {
+        if (edge.source.id == node.id) {
+          edge.source.type = node.type;
+        }
+
+        if (edge.target.id == node.id) {
+          edge.target.type = node.type;
+        }
+
+        return edge;
+      }),
+    ];
 
     this.setState({
       graph: graph,
@@ -755,6 +776,7 @@ class Graph extends DebugComponent {
     });
 
     this.renderNodes();
+    this.renderEdges();
   };
 
   onNodeEditExit = () => {
@@ -765,18 +787,28 @@ class Graph extends DebugComponent {
   };
 
   onChangeStage = (name, graph) => {
-    this.setState({
-      graph: graph,
-    });
-    this.clearStage();
-    this.renderNodes();
-    this.renderEdges();
-    setTimeout(() => {
-      this.handleZoomToFit();
-    }, 50);
+    this.setState(
+      {
+        graph: graph,
+      },
+      () => {
+        this.clearStage();
+        this.renderNodes();
+        this.renderEdges();
+        setTimeout(() => {
+          this.handleZoomToFit();
+        }, 50);
+      }
+    );
   };
 
   clearStage() {
+    Object.keys(this.nodeTimeouts).forEach(k =>
+      cancelAnimationFrame(this.nodeTimeouts[k])
+    );
+    Object.keys(this.edgeTimeouts).forEach(k =>
+      cancelAnimationFrame(this.nodeTimeouts[k])
+    );
     Object.keys(this.renderLayer).forEach(layer => {
       for (let i = this.renderLayer[layer].children.length - 1; i >= 0; --i) {
         this.renderLayer[layer].children[i].remove();

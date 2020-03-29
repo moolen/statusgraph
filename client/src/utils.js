@@ -1,6 +1,17 @@
-import { NodeTypeMap } from './config.js';
+import { NodeTypeMap, EdgeTypeMap } from './internal';
+import clonedeep from 'lodash.clonedeep';
 
 export class GraphUtils {
+  static edgeTypeToString(t) {
+    return Object.keys(EdgeTypeMap).find(k => EdgeTypeMap[k].class == t);
+  }
+
+  static edgeStringToType(s) {
+    const key = Object.keys(EdgeTypeMap).find(k => k == s);
+
+    return EdgeTypeMap[key].class;
+  }
+
   static nodeTypeToString(t) {
     return Object.keys(NodeTypeMap).find(k => NodeTypeMap[k].class == t);
   }
@@ -23,6 +34,10 @@ export class GraphUtils {
   static getRenderLayer(t) {
     const s = GraphUtils.nodeTypeToString(t);
 
+    if (!s) {
+      console.warn(`could not get node string for`, t);
+    }
+
     return NodeTypeMap[s].layer;
   }
 
@@ -40,13 +55,16 @@ export class GraphUtils {
     return edges.find(edge => edge.id == id);
   }
 
-  static serializeGraph(graph) {
+  static serializeGraph(g) {
+    const graph = clonedeep(g);
+
     graph.nodes.map(node => {
       node.type = GraphUtils.nodeTypeToString(node.type);
 
       return node;
     });
     graph.edges.map(edge => {
+      edge.type = GraphUtils.edgeTypeToString(edge.type);
       edge.source.type = GraphUtils.nodeTypeToString(edge.source.type);
       edge.target.type = GraphUtils.nodeTypeToString(edge.target.type);
 
@@ -55,15 +73,16 @@ export class GraphUtils {
 
     return JSON.stringify(graph);
   }
-  static deserializeGraph(string) {
-    const graph = JSON.parse(string);
 
+  // operates on the object reference
+  static deserializeGraph(graph) {
     graph.nodes.map(node => {
       node.type = GraphUtils.nodeStringToType(node.type);
 
       return node;
     });
     graph.edges.map(edge => {
+      edge.type = GraphUtils.edgeStringToType(edge.type);
       edge.source.type = GraphUtils.nodeStringToType(edge.source.type);
       edge.target.type = GraphUtils.nodeStringToType(edge.target.type);
 

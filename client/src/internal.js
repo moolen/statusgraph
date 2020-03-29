@@ -11,4 +11,6 @@ export { Sparkline } from './components/sparkline';
 export { Tooltip } from './components/tooltip';
 
 export { Edge } from './edge';
+
+export { nodeTypes, NodeTypeMap, EdgeTypeMap, ExampleGraph } from './config';
 export { GraphUtils } from './utils';

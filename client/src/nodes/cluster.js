@@ -51,6 +51,19 @@ export class Cluster extends React.Component {
     return graph;
   }
 
+  static isClusterContainer(container) {
+    if (
+      container.children.length > 0 &&
+      container.children[0].children.length > 0
+    ) {
+      return container.children[0].children[0].classList.contains(
+        'cluster-shape'
+      );
+    }
+
+    return false;
+  }
+
   componentDidMount() {
     this.toBackground();
     // disable dblclick to prevent zoom
@@ -151,24 +164,30 @@ export class Cluster extends React.Component {
         return;
       }
 
+      // cluster elements should get some extra padding
       const bb = nodeElem.getBBox();
       const maxX = bb.x + bb.width;
       const maxY = bb.y + bb.height;
+      let pad = 0;
+
+      if (Cluster.isClusterContainer(nodeElem)) {
+        pad = 5;
+      }
 
       if (bb.x < bounds.min.x) {
-        bounds.min.x = bb.x;
+        bounds.min.x = bb.x - pad;
       }
 
       if (bb.y < bounds.min.y) {
-        bounds.min.y = bb.y;
+        bounds.min.y = bb.y - pad;
       }
 
       if (maxX > bounds.max.x) {
-        bounds.max.x = maxX;
+        bounds.max.x = maxX + pad;
       }
 
       if (maxY > bounds.max.y) {
-        bounds.max.y = maxY;
+        bounds.max.y = maxY + pad;
       }
     });
 
@@ -200,6 +219,13 @@ export class Cluster extends React.Component {
       null,
       false
     );
+  };
+
+  handleMouseOver = () => {
+    this.props.onMouseOver(this.props.node);
+  };
+  handleMouseOut = () => {
+    this.props.onMouseOut(this.props.node);
   };
 
   renderText(coords) {
@@ -278,10 +304,14 @@ export class Cluster extends React.Component {
         style={{
           transform: `matrix(1, 0, 0, 1, ${coords.x}, ${coords.y})`,
         }}
+        onMouseOver={this.handleMouseOver}
+        onMouseOut={this.handleMouseOut}
       >
         <g className="cluster-shape">
           <rect
-            className={'node cluster'}
+            className={
+              'node cluster ' + (this.props.selected ? 'selected' : '')
+            }
             width={coords.width}
             height={coords.height}
           />

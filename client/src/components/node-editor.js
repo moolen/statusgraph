@@ -3,8 +3,7 @@ import './node-editor.scss';
 import Select from 'react-select';
 import { v4 as uuidv4 } from 'uuid';
 
-import { nodeTypes } from '../config';
-import { GraphUtils } from '../internal';
+import { nodeTypes, GraphUtils } from '../internal';
 
 export class NodeEditor extends React.Component {
   idInput = null;
@@ -161,7 +160,6 @@ export class NodeEditor extends React.Component {
 
     const allChildren = this.props.node
       ? this.props.nodes
-          .filter(node => GraphUtils.nodeTypeToString(node.type) != 'cluster')
           .filter(node => node.id != this.props.node.id)
           .map(node => {
             return {

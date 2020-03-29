@@ -2,7 +2,7 @@ import * as React from 'react';
 import AddStage from './stage-add';
 import EditStage from './stage-edit';
 import './titlebar.scss';
-import { GraphUtils } from '../utils';
+import { GraphUtils, ExampleGraph } from '../internal';
 
 export class Titlebar extends React.Component {
   state = {
@@ -10,16 +10,16 @@ export class Titlebar extends React.Component {
     availableStages: [],
   };
 
-  // constructor(props) {
-  //   super(props);
-  //   // TODO enable sync
-  //   //this.syncStages();
-  // }
+  constructor(props) {
+    super(props);
+    this.state.availableStages = [props.graph];
+    this.syncStages();
+  }
 
   onChange(e) {
     const { onChange } = this.props;
 
-    const stage = this.props.availableStages.find(
+    const stage = this.state.availableStages.find(
       x => x.name == e.target.value
     );
 
@@ -34,14 +34,10 @@ export class Titlebar extends React.Component {
     fetch('http://localhost:8000/api/graph', {})
       .then(res => res.json())
       .then(data => {
+        // load example graph if nothing is present on the server
+        // othweriwse pass the first graph to the update prop
         if (data.length == 0) {
-          data = [
-            {
-              name: 'default',
-              edges: [],
-              nodes: [],
-            },
-          ];
+          data = [ExampleGraph];
         }
 
         data = data.map(graph => {
@@ -83,7 +79,9 @@ export class Titlebar extends React.Component {
   onUpdate(stageName) {
     const { graph } = this.props;
     const { availableStages } = this.state;
+    const idx = availableStages.findIndex(s => s.id == graph.id);
 
+    availableStages[idx].name = stageName;
     graph.name = stageName;
 
     fetch(`http://localhost:8000/api/graph/${graph.id}`, {
@@ -91,8 +89,7 @@ export class Titlebar extends React.Component {
       body: GraphUtils.serializeGraph(graph),
     })
       .then(res => res.json())
-      .then(graph => {
-        graph = GraphUtils.deserializeGraph(graph);
+      .then(data => {
         this.setState({
           graph: graph,
           availableStages: availableStages,
@@ -102,7 +99,7 @@ export class Titlebar extends React.Component {
   }
 
   onSave() {
-    const graph = this.props;
+    const { graph } = this.props;
 
     fetch(`http://localhost:8000/api/graph/${graph.id}`, {
       method: 'POST',
@@ -110,8 +107,10 @@ export class Titlebar extends React.Component {
     });
   }
 
-  onDelete(stage) {
-    fetch(`http://localhost:8000/api/graph/${this.props.graph.id}`, {
+  onDelete() {
+    const { graph } = this.props;
+
+    fetch(`http://localhost:8000/api/graph/${graph.id}`, {
       method: 'DELETE',
     }).then(this.syncStages.bind(this));
   }

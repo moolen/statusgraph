@@ -30,14 +30,18 @@ $blue: hsl(207, 60%, 80%);
           fill: $red;
           stroke: darken($red, 40%);
         }
+
+
+        &.cluster{
+          fill: #FAEBD7;
+          stroke-dasharray: 5;
+          stroke: hsl(0, 0%, 60%);
+
+        }
+
         &.selected{
           fill: $blue;
           stroke: darken($blue, 40%);
-        }
-
-        &.cluster{
-          fill: white;
-          stroke: #000;
         }
     }
 
