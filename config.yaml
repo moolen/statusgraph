@@ -3,32 +3,35 @@ upstream:
     url: http://localhost:9090
   alertmanager:
     url: http://localhost:9093
-  servicegraph:
-    url: http://localhost:9090
 
 mapping:
   # this defines how we select alerts to display
   # use a `labelSelector` to filter
   # and `map` to specify the lookup key in the alert struct
   alerts:
-    labelSelector:
+    label_selector:
       - severity: "critical"
       - severity: "warning"
         important: "true"
-    map:
-      label: "service_id"
 
-  # this helps us to find all existing services by fetching the label values
-  # reference: https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values
-  service_labels:
-    - 'service_id'
+    # red & green lamp indicator
+    # Use this if your alerts use a specific label for a service (e.g. app=frontend / app=backend ...)
+    # this tells statusgraph to map alerts to nodes using the following labels/annotations
+    service_labels:
+      - "service_id"
+    service_annotations:
+      - "statusgraph-node"
 
   metrics:
+
+    # green lamp indicator!
+    # this helps statusgraph to find all existing services by fetching the label values
+    # reference: https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values
+    service_labels:
+      - 'service_id'
+
     queries:
       # just as an example
-      - name: cpu
-        query: sum(rate(node_cpu_seconds_total[1m])) by (service_id)
-        service_label: service_id
       - name: cpu wait
         query: sum(rate(node_pressure_cpu_waiting_seconds_total[1m])) by (service_id) * 100
         service_label: service_id

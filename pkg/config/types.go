@@ -19,15 +19,19 @@ type UpstreamConfig struct {
 
 // MappingType ..
 type MappingType struct {
-	AlertConfig   AlertMappingType  `yaml:"alerts" json:"alerts"`
-	ServiceLabels []string          `yaml:"service_labels" json:"service_labels"`
-	MetricConfig  MetricMappingType `yaml:"metrics" json:"metrics"`
+	AlertConfig  AlertMappingType  `yaml:"alerts" json:"alerts"`
+	MetricConfig MetricMappingType `yaml:"metrics" json:"metrics"`
 }
 
 // AlertMappingType ..
 type AlertMappingType struct {
-	LabelSelector []LabelSelector   `yaml:"labelSelector" json:"labelSelector"`
-	Map           map[string]string `yaml:"map" json:"map"`
+	LabelSelector      []LabelSelector `yaml:"label_selector" json:"label_selector"`
+	ServiceLabels      []string        `yaml:"service_labels" json:"service_labels"`
+	ServiceAnnotations []string        `yaml:"service_annotations" json:"service_annotations"`
+}
+
+type AlertMapper struct {
+	Label string `json:"label"`
 }
 
 // LabelSelector ..
@@ -35,7 +39,8 @@ type LabelSelector map[string]string
 
 // MetricMappingType ..
 type MetricMappingType struct {
-	Queries []Query `yaml:"queries" json:"queries"`
+	ServiceLabels []string `yaml:"service_labels" json:"service_labels"`
+	Queries       []Query  `yaml:"queries" json:"queries"`
 }
 
 // Query ..

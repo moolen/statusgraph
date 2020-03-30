@@ -58,32 +58,31 @@ mapping:
   # use a `labelSelector` to filter
   # and `map` to specify the lookup key in the alert struct
   alerts:
-    labelSelector:
-      # matches severity=critical OR (severity=warning AND important=true)
+    label_selector:
       - severity: "critical"
       - severity: "warning"
         important: "true"
 
-    # red lamp indicator!
-    # this tells statusgraph how to map the alerts on nodes in the graph:
-    # by looking up a label or a annotation on the alert
-    map:
-      label: "service_id"
-      annotation: "sid"
+    # red & green lamp indicator
+    # Use this if your alerts use a specific label for a service (e.g. app=frontend / app=backend ...)
+    # this tells statusgraph to map alerts to nodes using the following labels/annotations
+    service_labels:
+      - "service_id"
+    service_annotations:
+      - "statusgraph-node"
 
-  # green lamp indicator!
-  # this helps statusgraph to find all existing services by fetching the label values
-  # reference: https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values
-  service_labels:
-    - 'service_id'
-
-  # metrics are displayed in a tooltip while hovering a node
   metrics:
+
+    # green lamp indicator!
+    # this helps statusgraph to find all existing services by fetching the label values
+    # reference: https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values
+    service_labels:
+      - 'service_id'
+
     queries:
-      #   we have a metric with label service_id
-      #   and we want to map the label values to a node in the graph
-      - name: CPU
-        query: sum(rate(node_cpu_seconds_total[1m])) by (service_id)
+      # just as an example
+      - name: cpu wait
+        query: sum(rate(node_pressure_cpu_waiting_seconds_total[1m])) by (service_id) * 100
         service_label: service_id
 ```
 
