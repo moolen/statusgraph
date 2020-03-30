@@ -6,9 +6,11 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/moolen/statusgraph/pkg/config"
+	prom "github.com/prometheus/client_golang/api/prometheus/v1"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -36,13 +38,20 @@ type Metric struct {
 	Value  [][]interface{}   `json:"values"`
 }
 
+type RulesResponse struct {
+	Status string           `json:"status"`
+	Data   prom.RulesResult `json:"data"`
+}
+
 func FetchMetrics(cfg *config.ServerConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		availableServices := make(map[string]struct{})
 		var payload MetricResponse
 		c := http.Client{
 			Timeout: 10 * time.Second,
 		}
-		for _, label := range cfg.Mapping.ServiceLabels {
+
+		for _, label := range cfg.Mapping.MetricConfig.ServiceLabels {
 			req, err := http.NewRequest(
 				"GET",
 				fmt.Sprintf("%s:/api/v1/label/%s/values", cfg.Upstream.Prometheus.URL, label),
@@ -70,7 +79,15 @@ func FetchMetrics(cfg *config.ServerConfig) http.HandlerFunc {
 				json.NewEncoder(w).Encode(map[string]bool{"ok": false})
 				return
 			}
-			payload.AvailableServices = append(payload.AvailableServices, r.Values...)
+			// label values can be csv
+			for _, v := range r.Values {
+				for _, v := range strings.Split(v, ",") {
+					v = strings.Replace(v, " ", "", -1)
+					if _, ok := availableServices[v]; !ok {
+						availableServices[v] = struct{}{}
+					}
+				}
+			}
 		}
 
 		for _, query := range cfg.Mapping.MetricConfig.Queries {
@@ -157,8 +174,71 @@ func FetchMetrics(cfg *config.ServerConfig) http.HandlerFunc {
 			}
 		}
 
+		rulesRes, err := fetchRules(cfg)
+		if err != nil {
+			log.Error(err)
+			json.NewEncoder(w).Encode(map[string]bool{"ok": false})
+			return
+		}
+
+		for _, grp := range rulesRes.Data.Groups {
+			for _, r := range grp.Rules {
+				switch rule := r.(type) {
+				case prom.AlertingRule:
+					log.Infof("got a alerting rule: %#v", rule)
+					for k, v := range rule.Labels {
+						for _, svclbl := range cfg.Mapping.AlertConfig.ServiceLabels {
+							if string(k) == svclbl {
+								if _, ok := availableServices[string(v)]; !ok {
+									availableServices[string(v)] = struct{}{}
+								}
+							}
+						}
+					}
+					for k, v := range rule.Annotations {
+						for _, svclbl := range cfg.Mapping.AlertConfig.ServiceAnnotations {
+							if string(k) == svclbl {
+								if _, ok := availableServices[string(v)]; !ok {
+									availableServices[string(v)] = struct{}{}
+								}
+							}
+						}
+					}
+				default:
+					log.Infof("unknown rule type %s", r)
+					continue
+				}
+
+			}
+		}
+
+		for svc := range availableServices {
+			payload.AvailableServices = append(payload.AvailableServices, svc)
+		}
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(payload)
 	}
+}
+
+func fetchRules(cfg *config.ServerConfig) (*RulesResponse, error) {
+	c := http.Client{
+		Timeout: 10 * time.Second,
+	}
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s/api/v1/rules", cfg.Upstream.Prometheus.URL),
+		nil)
+	if err != nil {
+		return nil, err
+	}
+	res, err := c.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	payload := &RulesResponse{}
+	err = json.NewDecoder(res.Body).Decode(payload)
+	return payload, err
 }
