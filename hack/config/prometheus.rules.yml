@@ -17,3 +17,13 @@ groups:
     annotations:
       description: Service {{ $labels.instance }} is unavailable.
       value: DOWN ({{ $value }})
+
+  # example rule with explicit service mapping
+  - alert: service_down
+    expr: up{service_id="orders.svc"} == 0
+    labels:
+      severity: critical
+      service_id: "orders.svc"
+    annotations:
+      description: Service {{ $labels.instance }} is unavailable.
+      value: DOWN ({{ $value }})
