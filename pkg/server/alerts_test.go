@@ -20,7 +20,7 @@ func TestAlerts(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	for _, row := range []struct {
+	for i, row := range []struct {
 		cfg            *config.ServerConfig
 		serverResponse string
 		expectedStatus int
@@ -96,12 +96,12 @@ func TestAlerts(t *testing.T) {
 		res := httptest.NewRecorder()
 		FetchAlerts(row.cfg)(res, nil)
 		if res.Code != row.expectedStatus {
-			t.Errorf("expected status %d, got: %d", row.expectedStatus, res.Code)
+			t.Errorf("[%d]expected status %d, got: %d", i, row.expectedStatus, res.Code)
 		}
 		body := res.Body.String()
 		if strings.Compare(body, row.expectedBody) != 0 {
 			t.Logf("%#v | %#v", body, row.expectedBody)
-			t.Errorf("expected body %s, got: %s", row.expectedBody, body)
+			t.Errorf("[%d]expected body %s, got: %s", i, row.expectedBody, body)
 		}
 
 	}
