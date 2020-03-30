@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 
 	"github.com/moolen/statusgraph/pkg/config"
@@ -38,7 +39,7 @@ func TestGetGraph(t *testing.T) {
 				},
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody:   "[{\"name\":\"bar\",\"edges\":[],\"nodes\":[]},{\"name\":\"bar\",\"edges\":[],\"nodes\":[]}]\n",
+			expectedBody:   "[{\"id\":\"00000000-0000-0000-0000-000000000000\",\"name\":\"bar\",\"edges\":[],\"nodes\":[]},{\"id\":\"00000000-0000-0000-0000-000000000000\",\"name\":\"bar\",\"edges\":[],\"nodes\":[]}]\n",
 		},
 	} {
 		res := httptest.NewRecorder()
@@ -72,12 +73,17 @@ func TestSaveGraph(t *testing.T) {
 		{
 			cfg:  &config.ServerConfig{},
 			name: "fart",
-			req:  httptest.NewRequest("GET", "http://foo.example", bytes.NewBufferString(`{"name":"----","edges":[{"source":"example"}],"nodes":[]}\n`)),
+			req:  httptest.NewRequest("GET", "http://foo.example", bytes.NewBufferString(`{"name":"fart","edges":[{"source": {"id":"1029ade5-2373-4766-b51e-b905dfe300a9", "type":"rect"}}],"nodes":[]}\n`)),
 			expectedData: []store.Stage{
 				{
 					Name: "fart",
+					ID:   uuid.Nil,
 					Edges: []store.Edge{{
-						Source: "example",
+						ID: uuid.Nil,
+						Source: store.EdgeTarget{
+							ID:   uuid.MustParse("1029ade5-2373-4766-b51e-b905dfe300a9"),
+							Type: "rect",
+						},
 					}},
 					Nodes: make([]store.Node, 0),
 				},
@@ -99,7 +105,7 @@ func TestSaveGraph(t *testing.T) {
 		row.req = mux.SetURLVars(row.req, map[string]string{
 			"name": row.name,
 		})
-		SaveGraph(s)(res, row.req)
+		SaveStage(s)(res, row.req)
 		if res.Code != row.expectedStatus {
 			t.Errorf("expected status %d, got: %d", row.expectedStatus, res.Code)
 		}
