@@ -52,8 +52,6 @@ upstream:
     url: http://localhost:9090
   alertmanager:
     url: http://localhost:9093
-  servicegraph:
-    url: http://localhost:9090
 
 mapping:
   # this defines how we select alerts to display
@@ -65,19 +63,25 @@ mapping:
       - severity: "critical"
       - severity: "warning"
         important: "true"
+
+    # red lamp indicator!
+    # this tells statusgraph how to map the alerts on nodes in the graph:
+    # by looking up a label or a annotation on the alert
     map:
       label: "service_id"
+      annotation: "sid"
 
-  # this helps us to find all existing services by fetching the label values
+  # green lamp indicator!
+  # this helps statusgraph to find all existing services by fetching the label values
   # reference: https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values
   service_labels:
     - 'service_id'
 
+  # metrics are displayed in a tooltip while hovering a node
   metrics:
     queries:
-    # (for now) a single use-case is supported:
-    #   we have a metric with label service_id
-    #   and we want to map the label values to a node in the graph
+      #   we have a metric with label service_id
+      #   and we want to map the label values to a node in the graph
       - name: CPU
         query: sum(rate(node_cpu_seconds_total[1m])) by (service_id)
         service_label: service_id
