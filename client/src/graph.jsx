@@ -702,7 +702,6 @@ class Graph extends DebugComponent {
       return [false, false];
     }
 
-    // TODO: add interface for and documentation
     // the edge determines the connection points
     // by calling static methods on the node class.
     // The node class decides where a edge can
