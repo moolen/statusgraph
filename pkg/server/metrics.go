@@ -212,6 +212,7 @@ func FetchMetrics(cfg *config.ServerConfig) http.HandlerFunc {
 			}
 		}
 
+		// TODO: decouple availableServices from the metrics endpoint
 		for svc := range availableServices {
 			payload.AvailableServices = append(payload.AvailableServices, svc)
 		}
