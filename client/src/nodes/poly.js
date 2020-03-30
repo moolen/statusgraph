@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 class Poly extends Rect {
   state = {};
-  static width = 90;
+  static width = 92;
   static height = 75;
   constructor(props) {
     super(props);

@@ -5,7 +5,7 @@ import { GraphUtils } from '../internal';
 
 export class Cluster extends React.Component {
   nodeRef;
-  padding = 20;
+  padding = 16;
 
   state = {
     bounds: {
@@ -64,6 +64,19 @@ export class Cluster extends React.Component {
     return false;
   }
 
+  static getEdgeTargetID(edgeTarget) {
+    return edgeTarget.id;
+  }
+
+  static getConnectorPosition(node, edgeTarget) {
+    const bounds = Cluster.getClusterBounds(node);
+
+    return {
+      x: bounds.min.x + (bounds.max.x - bounds.min.x) / 2,
+      y: bounds.min.y,
+    };
+  }
+
   componentDidMount() {
     this.toBackground();
     // disable dblclick to prevent zoom
@@ -104,10 +117,13 @@ export class Cluster extends React.Component {
     const { onUpdatePosition } = this.props;
     const { bounds } = this.state;
     const { pointerOffset } = this.state;
+
+    const gb = GraphUtils.getGridPosition(event);
+
     const newState = {
       bounds: {
-        x: event.x,
-        y: event.y,
+        x: gb.x,
+        y: gb.y,
         width: bounds.width,
         height: bounds.height,
       },
@@ -115,8 +131,8 @@ export class Cluster extends React.Component {
     };
 
     newState.pointerOffset = pointerOffset || {
-      x: event.x - (bounds.x || 0),
-      y: event.y - (bounds.y || 0),
+      x: gb.x - (bounds.x || 0),
+      y: gb.y - (bounds.y || 0),
     };
     newState.bounds.x -= newState.pointerOffset.x;
     newState.bounds.y -= newState.pointerOffset.y;
@@ -199,8 +215,10 @@ export class Cluster extends React.Component {
       return;
     }
 
-    const { bounds } = this.state;
+    let { bounds } = this.state;
     const { node, onUpdatePosition } = this.props;
+
+    bounds = GraphUtils.getGridPosition(bounds);
 
     this.setState({
       initialBounds: bounds,
@@ -287,9 +305,9 @@ export class Cluster extends React.Component {
 
     const coords = {
       x: bounds.x - this.padding,
-      y: bounds.y - this.padding,
+      y: bounds.y - this.padding * 2,
       width: bounds.width + 2 * this.padding,
-      height: bounds.height + 2 * this.padding,
+      height: bounds.height + 3 * this.padding,
     };
 
     return (

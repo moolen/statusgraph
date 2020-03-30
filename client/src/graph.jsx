@@ -290,6 +290,10 @@ class Graph extends DebugComponent {
       this.removeDraggingEdgeContainer(oldDragging);
       this.renderEdges();
     }
+
+    node.bounds = GraphUtils.getGridPosition(node.bounds);
+    this.renderEdges();
+    this.renderNodes();
   };
 
   edgeExists(e) {
@@ -562,17 +566,68 @@ class Graph extends DebugComponent {
   }
 
   getHighlight(node) {
-    const { alerts, metrics } = this.props;
+    const { alerts, metrics, mapping } = this.props;
 
+    // the alert map have csv in their service label
     const hasAlert =
-      alerts.find(alert => alert.labels.service_id == node.name) !== undefined;
+      alerts.find(alert => {
+        let found = false;
+
+        // check if labels match
+        mapping.alerts.service_labels.forEach(key => {
+          if (!alert.labels || !alert.labels[key]) {
+            return false;
+          }
+
+          const svcs = alert.labels[key]
+            .split(',')
+            .map(x => x.trim().toLowerCase());
+
+          if (svcs.includes(node.name.toLowerCase())) {
+            found = true;
+          }
+        });
+
+        if (found) {
+          return true;
+        }
+
+        // check if annotations match
+        mapping.alerts.service_annotations.forEach(key => {
+          if (!alert.annotations || !alert.annotations[key]) {
+            return false;
+          }
+
+          const svcs = alert.annotations[key]
+            .split(',')
+            .map(x => x.trim().toLowerCase());
+
+          if (svcs.includes(node.name.toLowerCase())) {
+            found = true;
+          }
+        });
+
+        return found;
+      }) !== undefined;
 
     if (hasAlert) {
       return 'alert';
     }
 
-    return metrics.available_services &&
-      metrics.available_services.includes(node.name)
+    if (!metrics.available_services) {
+      return '';
+    }
+
+    // ["foo,bar", "baz"] => does it include "foo"?
+    return metrics.available_services
+      .map(x =>
+        x
+          .toLowerCase()
+          .split(',')
+          .map(inner => inner.trim())
+          .includes(node.name.toLowerCase())
+      )
+      .includes(true)
       ? 'ok'
       : '';
   }

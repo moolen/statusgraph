@@ -11,6 +11,7 @@ export class Tooltip extends React.Component {
       return [];
     }
 
+    // TODO: service_id should not be hard coded!
     return alerts.filter(alert => alert.labels.service_id == node.name);
   }
 

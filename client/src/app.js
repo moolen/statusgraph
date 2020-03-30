@@ -28,10 +28,15 @@ class App extends React.Component {
       .then(json => {
         return this.setState({ metrics: json });
       });
+    fetch('http://localhost:8000/api/config/mapping')
+      .then(res => res.json())
+      .then(json => {
+        return this.setState({ mapping: json });
+      });
   }
 
   render() {
-    const { alerts, metrics } = this.state;
+    const { alerts, metrics, mapping } = this.state;
 
     return (
       <Router>
@@ -39,7 +44,9 @@ class App extends React.Component {
           <Route
             exact={true}
             path="/"
-            render={() => <Graph alerts={alerts} metrics={metrics} />}
+            render={() => (
+              <Graph alerts={alerts} metrics={metrics} mapping={mapping} />
+            )}
           />
         </div>
       </Router>

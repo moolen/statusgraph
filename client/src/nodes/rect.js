@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import * as React from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { GraphUtils } from '../utils';
 
 class Rect extends React.Component {
   state = {};
@@ -102,9 +103,9 @@ class Rect extends React.Component {
   };
 
   static calcWidth(node) {
-    const width = 20 + node.name.length * 5;
+    const width = GraphUtils.gridify(20 + node.name.length * 7);
 
-    return Math.max(100, width);
+    return Math.max(96, width);
   }
 
   render() {

@@ -91,4 +91,29 @@ export class GraphUtils {
 
     return graph;
   }
+
+  static getGridPosition(pos) {
+    const { x, y } = pos;
+
+    pos.x = GraphUtils.gridify(x);
+    pos.y = GraphUtils.gridify(y);
+
+    return pos;
+  }
+
+  static gridify(n) {
+    const gridSpacing = 16;
+    const gridSnap = gridSpacing / 2;
+    const rest = n % gridSpacing;
+
+    if (rest == 0) {
+      return n;
+    }
+
+    if (rest < gridSnap) {
+      return n - rest;
+    }
+
+    return n - rest + gridSpacing;
+  }
 }
