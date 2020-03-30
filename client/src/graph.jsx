@@ -544,8 +544,6 @@ class Graph extends DebugComponent {
       />
     );
 
-    // TODO: if we change the node type we must ensure that
-    //       its container will be moved to the appropriate layer
     const containerId = GraphUtils.getNodeContainerById(node.id);
     let nodeContainer = document.getElementById(containerId);
 
@@ -588,9 +586,9 @@ class Graph extends DebugComponent {
 
     // remove node from dom
     const containerId = GraphUtils.getNodeContainerById(id);
-    const edgeContainer = document.getElementById(containerId);
+    const nodeContainer = document.getElementById(containerId);
 
-    if (!edgeContainer) {
+    if (!nodeContainer) {
       console.warn(`trying to remove node with missing container`);
 
       return;
@@ -601,7 +599,7 @@ class Graph extends DebugComponent {
       .filter(edge => edge.source.id == id || edge.target.id == id)
       .forEach(edge => this.removeEdgeByID(edge.id));
 
-    edgeContainer.remove();
+    nodeContainer.remove();
 
     graph.nodes = graph.nodes.map(node => {
       if (node.children && node.children.includes(id)) {
@@ -770,6 +768,15 @@ class Graph extends DebugComponent {
         return edge;
       }),
     ];
+
+    // if we change the node type we must ensure that
+    // its container will be moved to the appropriate layer
+    if (oldNode.type != node.type) {
+      const containerId = GraphUtils.getNodeContainerById(node.id);
+      const nodeContainer = document.getElementById(containerId);
+
+      nodeContainer.remove();
+    }
 
     this.setState({
       graph: graph,
