@@ -136,7 +136,9 @@ class Service extends Rect {
       const id = node.id + '-' + tp.id + '-' + g;
       const el = document.getElementById(id);
 
-      el.classList.remove('invisible');
+      if (el) {
+        el.classList.remove('invisible');
+      }
     });
   }
 
