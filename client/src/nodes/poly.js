@@ -55,15 +55,11 @@ class Poly extends Rect {
           fill={selected ? '#7379fc' : 'white'}
           d="M0,36l18,-36l52,0l18,36l-18,36l-52,0z"
         ></path>
-        <text
-          className="node-text"
-          x={Poly.width / 2}
-          y={Poly.height / 2}
-          textAnchor="middle"
-          dominantBaseline="middle"
-        >
-          {node.name}
-        </text>
+        <foreignObject width={Poly.width - 4} height={Poly.height}>
+          <div className="poly-text">
+            <span>{node.name}</span>
+          </div>
+        </foreignObject>
       </g>
     );
   }

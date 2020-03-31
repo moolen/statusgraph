@@ -40,10 +40,28 @@
           fill: $blue;
           stroke: darken($blue, 40%);
         }
+
+
     }
 
 
+    .poly-text{
+      text-align: center;
+      padding: 5px 10px;
+      text-overflow: ellipsis;
+      word-wrap: break-word;
 
+      height: 62px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      span{
+        display: inline-block;
+        vertical-align: middle;
+        line-height: normal;
+      }
+    }
 
 
     .selected{
