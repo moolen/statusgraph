@@ -583,7 +583,7 @@ class Graph extends DebugComponent {
   }
 
   getHighlight(node) {
-    const { alerts, metrics, mapping } = this.props;
+    const { alerts, services, mapping } = this.props;
 
     // the alert map have csv in their service label
     const hasAlert =
@@ -631,12 +631,12 @@ class Graph extends DebugComponent {
       return 'alert';
     }
 
-    if (!metrics.available_services) {
+    if (!services.available_services) {
       return '';
     }
 
     // ["foo,bar", "baz"] => does it include "foo"?
-    return metrics.available_services
+    return services.available_services
       .map(x =>
         x
           .toLowerCase()

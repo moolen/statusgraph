@@ -28,10 +28,13 @@ func New(cfg *config.ServerConfig, staticDir, dataDir string) *Server {
 	})
 	router.HandleFunc("/api/alerts", FetchAlerts(cfg))
 	router.HandleFunc("/api/metrics", FetchMetrics(cfg))
+	router.HandleFunc("/api/services", FetchAvailableServices(cfg))
+
 	router.HandleFunc("/api/graph", GetGraph(s)).Methods("GET")
 	router.PathPrefix("/api/graph/{id}").HandlerFunc(SaveStage(s)).Methods("POST")
 	router.PathPrefix("/api/graph/{id}").HandlerFunc(DeleteStage(s)).Methods("DELETE")
 	router.PathPrefix("/api/graph").HandlerFunc(CreateStage(s)).Methods("POST")
+
 	router.Handle("/metrics", promhttp.Handler())
 
 	router.HandleFunc("/api/config/mapping", func(w http.ResponseWriter, r *http.Request) {
