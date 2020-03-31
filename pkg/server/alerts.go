@@ -8,6 +8,7 @@ import (
 
 	"github.com/moolen/statusgraph/pkg/config"
 	am "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -16,6 +17,8 @@ func FetchAlerts(cfg *config.ServerConfig) http.HandlerFunc {
 		c := http.Client{
 			Timeout: 10 * time.Second,
 		}
+		upstreamTimer := prometheus.NewTimer(upstreamDuration.WithLabelValues("alertmanager", "alerts"))
+		defer upstreamTimer.ObserveDuration()
 		req, err := http.NewRequest(
 			"GET",
 			fmt.Sprintf("%s/api/v2/alerts", cfg.Upstream.Alertmanager.URL),

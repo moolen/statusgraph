@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	prommw "github.com/albertogviana/prometheus-middleware"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/moolen/statusgraph/pkg/config"
@@ -23,6 +24,8 @@ type Server struct {
 func New(cfg *config.ServerConfig, staticDir, dataDir string) *Server {
 	router := mux.NewRouter()
 	s := store.NewDisk(dataDir)
+	mw := prommw.NewPrometheusMiddleware(prommw.Opts{})
+	router.Use(mw.InstrumentHandlerDuration)
 	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 	})

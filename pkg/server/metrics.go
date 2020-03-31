@@ -11,6 +11,7 @@ import (
 
 	"github.com/moolen/statusgraph/pkg/config"
 	prom "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -73,6 +74,7 @@ func fetchMetrics(cfg *config.ServerConfig) (payload MetricResponse, errors erro
 		params.Add("step", "60")
 		u.RawQuery = params.Encode()
 		log.Infof("q: %s", u)
+		upstreamTimer := prometheus.NewTimer(upstreamDuration.WithLabelValues("prometheus", "query_range"))
 		req, err := http.NewRequest(
 			"GET",
 			u.String(),
@@ -86,6 +88,7 @@ func fetchMetrics(cfg *config.ServerConfig) (payload MetricResponse, errors erro
 			errs = append(errs, fmt.Sprintf("[%d] error executing request: %s", i, err))
 			continue
 		}
+		upstreamTimer.ObserveDuration()
 		defer res.Body.Close()
 		var m QueryResult
 		err = json.NewDecoder(res.Body).Decode(&m)

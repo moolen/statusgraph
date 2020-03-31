@@ -9,6 +9,7 @@ import (
 
 	"github.com/moolen/statusgraph/pkg/config"
 	prom "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -59,6 +60,7 @@ func fetchLabelValues(cfg *config.ServerConfig) ([]string, error) {
 	var errs []string
 
 	for _, label := range cfg.Mapping.MetricConfig.ServiceLabels {
+		upstreamTimer := prometheus.NewTimer(upstreamDuration.WithLabelValues("prometheus", "label_values"))
 		req, err := http.NewRequest(
 			"GET",
 			fmt.Sprintf("%s:/api/v1/label/%s/values", cfg.Upstream.Prometheus.URL, label),
@@ -72,6 +74,7 @@ func fetchLabelValues(cfg *config.ServerConfig) ([]string, error) {
 			errs = append(errs, fmt.Sprintf("[%s] error executing request: %s", label, err.Error()))
 			continue
 		}
+		upstreamTimer.ObserveDuration()
 		defer res.Body.Close()
 
 		var r struct {
@@ -152,6 +155,7 @@ func fetchRules(cfg *config.ServerConfig) (*RulesResponse, error) {
 	c := http.Client{
 		Timeout: 10 * time.Second,
 	}
+	upstreamTimer := prometheus.NewTimer(upstreamDuration.WithLabelValues("prometheus", "rules"))
 	req, err := http.NewRequest(
 		"GET",
 		fmt.Sprintf("%s/api/v1/rules", cfg.Upstream.Prometheus.URL),
@@ -163,6 +167,7 @@ func fetchRules(cfg *config.ServerConfig) (*RulesResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	upstreamTimer.ObserveDuration()
 	defer res.Body.Close()
 
 	payload := &RulesResponse{}
