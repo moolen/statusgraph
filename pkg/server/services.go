@@ -45,6 +45,8 @@ func FetchAvailableServices(cfg *config.ServerConfig) http.HandlerFunc {
 		}
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Add("Cache-Control", "public, min-fresh=300m, max-age=600m")
+		w.Header().Add("Cache-Control", "max-age=5m")
 		json.NewEncoder(w).Encode(payload)
 	}
 }
