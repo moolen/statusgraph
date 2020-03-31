@@ -1,0 +1,14 @@
+{
+  "branch": "release",
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    ["@semantic-release/release-notes-generator", {
+      "writerOpts": {
+        "headerPartial": "# {{version}}\nImage: `quay.io/moolen/statusgraph:{{version}}`"
+      }
+    }],
+    ["@semantic-release/exec", {
+      "publishCmd": "make release version=${nextRelease.version}"
+    }]
+  ]
+}

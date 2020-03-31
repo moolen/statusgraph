@@ -19,9 +19,12 @@ ENV NODE_ENV=production
 RUN npm run build:prod
 
 FROM alpine:3.10
-
+RUN adduser -D -u 1000 statusgraph
 COPY --from=go-builder /go/src/github.com/moolen/statusgraph/statusgraph /usr/local/bin/statusgraph
 COPY config.yaml /etc/statusgraph/config.yaml
-COPY --from=client-builder /usr/src/app/dist /www
+COPY --chown=statusgraph --from=client-builder /usr/src/app/dist /www
+RUN mkdir /data && chown statusgraph /data
+
 EXPOSE 8000
+USER statusgraph
 ENTRYPOINT ["/usr/local/bin/statusgraph"]
