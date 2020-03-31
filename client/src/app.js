@@ -18,17 +18,17 @@ class App extends React.Component {
   }
 
   sync() {
-    fetch('http://localhost:8000/api/alerts')
+    fetch(`${window.baseUrl}/api/alerts`)
       .then(res => res.json())
       .then(json => {
         return this.setState({ alerts: json });
       });
-    fetch('http://localhost:8000/api/metrics')
+    fetch(`${window.baseUrl}/api/metrics`)
       .then(res => res.json())
       .then(json => {
         return this.setState({ metrics: json });
       });
-    fetch('http://localhost:8000/api/config/mapping')
+    fetch(`${window.baseUrl}/api/config/mapping`)
       .then(res => res.json())
       .then(json => {
         return this.setState({ mapping: json });

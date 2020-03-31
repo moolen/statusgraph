@@ -2,6 +2,10 @@
   <head>
     <title>Statusgraph</title>
     <link rel="stylesheet" href="app.css">
+    <script>
+      var getUrl = window.location;
+      var baseUrl = getUrl .protocol + "//" + getUrl.host + "/" + getUrl.pathname.split('/')[1];
+    </script>
   </head>
 
   <body>

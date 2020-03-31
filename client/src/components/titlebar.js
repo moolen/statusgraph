@@ -31,7 +31,7 @@ export class Titlebar extends React.Component {
   }
 
   syncStages() {
-    fetch('http://localhost:8000/api/graph', {})
+    fetch(`${window.baseUrl}/api/graph`, {})
       .then(res => res.json())
       .then(data => {
         // load example graph if nothing is present on the server
@@ -54,7 +54,7 @@ export class Titlebar extends React.Component {
   }
 
   onAdd(stageName) {
-    fetch(`http://localhost:8000/api/graph`, {
+    fetch(`${window.baseUrl}/api/graph`, {
       method: 'POST',
       body: GraphUtils.serializeGraph({
         name: stageName,
@@ -84,7 +84,7 @@ export class Titlebar extends React.Component {
     availableStages[idx].name = stageName;
     graph.name = stageName;
 
-    fetch(`http://localhost:8000/api/graph/${graph.id}`, {
+    fetch(`${window.baseUrl}/api/graph/${graph.id}`, {
       method: 'POST',
       body: GraphUtils.serializeGraph(graph),
     })
@@ -101,7 +101,7 @@ export class Titlebar extends React.Component {
   onSave() {
     const { graph } = this.props;
 
-    fetch(`http://localhost:8000/api/graph/${graph.id}`, {
+    fetch(`${window.baseUrl}/api/graph/${graph.id}`, {
       method: 'POST',
       body: GraphUtils.serializeGraph(this.props.graph),
     });
@@ -110,7 +110,7 @@ export class Titlebar extends React.Component {
   onDelete() {
     const { graph } = this.props;
 
-    fetch(`http://localhost:8000/api/graph/${graph.id}`, {
+    fetch(`${window.baseUrl}/api/graph/${graph.id}`, {
       method: 'DELETE',
     }).then(this.syncStages.bind(this));
   }
