@@ -5,105 +5,92 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/moolen/statusgraph/pkg/config"
 )
 
 func TestFetchMetrics(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(rulesResponse))
+		w.Write([]byte(metricsResponse))
 	}))
 	defer srv.Close()
-
-	rules, err := fetchRules(&config.ServerConfig{
+	res, err := fetchMetrics(&config.ServerConfig{
 		Upstream: config.UpstreamType{
 			Prometheus: config.UpstreamConfig{
 				URL: srv.URL,
+			},
+		},
+		Mapping: config.MappingType{
+
+			MetricConfig: config.MetricMappingType{
+				ServiceLabels: []string{"service_id"},
+				Queries: []config.Query{
+					{
+						Name:         "foo",
+						Query:        "doesntmatter",
+						ServiceLabel: "service_id",
+					},
+				},
 			},
 		},
 	})
 	if err != nil {
 		t.Error(err)
 	}
-
-	if len(rules.Data.Groups) != 2 {
-		t.Errorf("unexpected number of groups")
+	expected := MetricResponse{
+		Metrics: map[string]map[string][]TSValue{
+			"Foobar": map[string][]TSValue{
+				"foo": []TSValue{
+					{
+						Date:  "52181-04-15T09:46:40+01:00",
+						Value: 0,
+					},
+					{
+						Date:  "52181-04-15T09:46:40+01:00",
+						Value: 0.5,
+					},
+					{
+						Date:  "52181-04-15T09:46:40+01:00",
+						Value: 1,
+					},
+				},
+			},
+		},
 	}
-
-	if len(rules.Data.Groups[0].Rules) != 2 {
-		t.Errorf("unexpected number of rules")
+	if !cmp.Equal(expected, res) {
+		t.Errorf("unexpected response: %v, expected %v", res, expected)
 	}
 
 }
 
-const rulesResponse = `
+const metricsResponse = `
 {
     "status": "success",
     "data": {
-        "groups": [
+        "resultType": "matrix",
+        "result": [
             {
-                "name": "Group 1",
-                "file": "/etc/prometheus-rules/group-1.rules",
-                "rules": [
-                    {
-                        "name": "MyTestAlert1",
-                        "query": "foobar > 0",
-                        "duration": 0,
-                        "labels": {
-                            "severity": "critical",
-                            "service_id": "orders.svc"
-                        },
-                        "annotations": {
-                            "dashboard": "example.com"
-                        },
-                        "alerts": [],
-                        "health": "unknown",
-                        "type": "alerting"
-                    },
-                    {
-                        "name": "myteam:myservice:5xx:error:budget",
-                        "query": "fobar < 0",
-                        "health": "unknown",
-                        "type": "recording"
-                        }
-                ],
-                "interval": 60
-            },
-            {
-                "name": "group 2",
-                "file": "/etc/prometheus-rules/group2.rules",
-                "rules": [
-                    {
-                        "name": "MyTestAlert2",
-                        "query": "fart > 42",
-                        "duration": 0,
-                        "labels": {
-                            "severity": "warning",
-                            "service_id": "orders.svc"
-
-                        },
-                        "annotations": {},
-                        "alerts": [],
-                        "health": "unknown",
-                        "type": "alerting"
-                    },
-                    {
-                        "name": "MyTestAlert3",
-                        "query": "fart < 42",
-                        "duration": 0,
-                        "labels": {
-                            "severity": "warning",
-                            "service_id": "{{ $labels.service_id }}"
-
-                        },
-                        "annotations": {},
-                        "alerts": [],
-                        "health": "unknown",
-                        "type": "alerting"
-                    }
-                ],
-                "interval": 60
+                "metric": {
+                    "__name__": "service:availability",
+                    "service_id": "Foobar"
+                },
+                "values": [
+                    [
+                        1584515206000,
+                        "0"
+                    ],
+                    [
+                        1584515206000,
+                        "0.5"
+                    ],
+                    [
+                        1584515206000,
+                        "1"
+                    ]
+                ]
             }
         ]
     }
-}`
+}
+`

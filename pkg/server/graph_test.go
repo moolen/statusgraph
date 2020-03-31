@@ -125,3 +125,86 @@ func TestSaveGraph(t *testing.T) {
 
 	}
 }
+
+func TestDeleteGraph(t *testing.T) {
+	s := store.NewMemory()
+	for _, row := range []struct {
+		cfg            *config.ServerConfig
+		name           string
+		req            *http.Request
+		initialData    map[string]store.Stage
+		expectedData   []store.Stage
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			cfg:  &config.ServerConfig{},
+			name: "9381acab-2373-4766-b51e-0005dfe30000",
+			req:  httptest.NewRequest("GET", "http://foo.example", nil),
+			initialData: map[string]store.Stage{
+				"9381acab-2373-4766-b51e-0005dfe30000": store.Stage{
+					Name:  "fart",
+					ID:    uuid.MustParse("9381acab-2373-4766-b51e-0005dfe30000"),
+					Edges: make([]store.Edge, 0),
+					Nodes: make([]store.Node, 0),
+				},
+			},
+			expectedData:   []store.Stage{},
+			expectedStatus: http.StatusOK,
+			expectedBody:   "{\"ok\":true}\n",
+		},
+		{
+			// should not delete existing things
+			cfg:  &config.ServerConfig{},
+			name: "NONEXISTENT",
+			req:  httptest.NewRequest("GET", "http://foo.example", nil),
+			initialData: map[string]store.Stage{
+				"9381acab-2373-4766-b51e-0005dfe30000": store.Stage{
+					Name:  "fart",
+					ID:    uuid.MustParse("9381acab-2373-4766-b51e-0005dfe30000"),
+					Edges: make([]store.Edge, 0),
+					Nodes: make([]store.Node, 0),
+				},
+			},
+			expectedData: []store.Stage{
+				{
+					Name:  "fart",
+					ID:    uuid.MustParse("9381acab-2373-4766-b51e-0005dfe30000"),
+					Edges: make([]store.Edge, 0),
+					Nodes: make([]store.Node, 0),
+				},
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   "{\"ok\":true}\n",
+		},
+	} {
+		res := httptest.NewRecorder()
+		s.Reset()
+
+		for k, d := range row.initialData {
+			s.Save(k, &d)
+		}
+
+		row.req = mux.SetURLVars(row.req, map[string]string{
+			"id": row.name,
+		})
+		DeleteStage(s)(res, row.req)
+		if res.Code != row.expectedStatus {
+			t.Errorf("expected status %d, got: %d", row.expectedStatus, res.Code)
+		}
+		body := res.Body.String()
+		if strings.Compare(body, row.expectedBody) != 0 {
+			t.Logf("%#v | %#v", body, row.expectedBody)
+			t.Errorf("expected body %s, got: %s", row.expectedBody, body)
+		}
+
+		d, err := s.Load()
+		if err != nil {
+			t.Fail()
+		}
+		if !cmp.Equal(d, row.expectedData) {
+			t.Errorf("expected store data %#v, got: %#v", row.expectedData, d)
+		}
+
+	}
+}
