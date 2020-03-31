@@ -8,7 +8,7 @@ A status page for your distributed system.
 
 Try the UI (without colors):
 ```
-$ docker run -it -p 8000:8000 quay.io/moolen/statusgraph:0.1.0 server
+$ docker run -it -p 8000:8000 quay.io/moolen/statusgraph:latest server
 ```
 
 ## Overview
