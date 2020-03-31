@@ -118,6 +118,10 @@ export class Cluster extends React.Component {
     const { bounds } = this.state;
     const { pointerOffset } = this.state;
 
+    if (this.props.writeLocked) {
+      return;
+    }
+
     const gb = GraphUtils.getGridPosition(event);
 
     const newState = {
@@ -153,6 +157,10 @@ export class Cluster extends React.Component {
   };
 
   handleDragStart = () => {
+    if (this.props.writeLocked) {
+      return;
+    }
+
     this.setState({ dragging: true });
   };
 

@@ -27,7 +27,7 @@ class Graph extends DebugComponent {
   state = {
     hoveredNode: null,
     draggingEdge: null,
-    writeLocked: false,
+    writeLocked: true,
     editorNode: null,
     graph: {
       id: '',
@@ -134,6 +134,10 @@ class Graph extends DebugComponent {
   }
 
   handleWrapperKeydown(e) {
+    if (this.state.writeLocked) {
+      return;
+    }
+
     if (e.key == 'Escape') {
       this.setState({
         editorNode: null,
@@ -159,11 +163,15 @@ class Graph extends DebugComponent {
 
     this.setState({ selectedNode: hoveredNode ? hoveredNode.id : null });
 
-    if (shiftKey) {
-      const x = coords[0] - 40;
-      const y = coords[1] - 40;
+    if (this.state.writeLocked) {
+      return;
+    }
 
-      this.createNode(Rect.new(x, y, 'my.service'));
+    if (shiftKey) {
+      const x = GraphUtils.gridify(coords[0]);
+      const y = GraphUtils.gridify(coords[1]);
+
+      this.createNode(Rect.new(x, y, 'new node'));
     }
 
     this.setState({
@@ -176,7 +184,11 @@ class Graph extends DebugComponent {
 
   onUpdateNodePosition = (nodeData, newNodePos, pointerPos, shift) => {
     const node = GraphUtils.getNodeByID(this.state.graph.nodes, nodeData.id);
-    const { draggingEdge } = this.state;
+    const { draggingEdge, writeLocked } = this.state;
+
+    if (writeLocked) {
+      return;
+    }
 
     this.setState({
       selectedEdge: null,
@@ -253,6 +265,10 @@ class Graph extends DebugComponent {
     const { graph, draggingEdge, hoveredNode } = this.state;
 
     const oldDragging = Object.assign({}, draggingEdge);
+
+    if (this.state.writeLocked) {
+      return;
+    }
 
     if (draggingEdge) {
       if (hoveredNode) {
@@ -538,6 +554,7 @@ class Graph extends DebugComponent {
     const element = (
       <node.type
         node={node}
+        writeLocked={this.state.writeLocked}
         selected={selectedNode == node.id}
         highlight={highlightState}
         onUpdatePosition={this.onUpdateNodePosition}
@@ -865,6 +882,10 @@ class Graph extends DebugComponent {
     );
   };
 
+  onChangeWriteLock = wl => {
+    this.setState({ writeLocked: wl });
+  };
+
   clearStage() {
     Object.keys(this.nodeTimeouts).forEach(k =>
       cancelAnimationFrame(this.nodeTimeouts[k])
@@ -882,7 +903,12 @@ class Graph extends DebugComponent {
   render() {
     return (
       <div className="app">
-        <Titlebar onChange={this.onChangeStage} graph={this.state.graph} />
+        <Titlebar
+          writeLocked={this.state.writeLocked}
+          onChange={this.onChangeStage}
+          onChangeWriteLock={this.onChangeWriteLock}
+          graph={this.state.graph}
+        />
         <NodeEditor
           onNodeEditChange={this.onNodeEditChange}
           onNodeEditExit={this.onNodeEditExit}

@@ -50,6 +50,20 @@ export class Titlebar extends React.Component {
           graph: data[0],
         });
         this.props.onChange(data[0].name, data[0]);
+      })
+      .catch(err => {
+        console.warn(err);
+        let data = [ExampleGraph];
+
+        data = data.map(graph => {
+          return GraphUtils.deserializeGraph(graph);
+        });
+        this.setState({
+          selectedStage: data[0].name,
+          availableStages: data,
+          graph: data[0],
+        });
+        this.props.onChange(data[0].name, data[0]);
       });
   }
 
@@ -115,9 +129,15 @@ export class Titlebar extends React.Component {
     }).then(this.syncStages.bind(this));
   }
 
+  toggleWriteLock = () => {
+    const { writeLocked } = this.props;
+
+    this.props.onChangeWriteLock(!writeLocked);
+  };
+
   render() {
     const { availableStages, selectedStage } = this.state;
-    const { writeLocked } = this.state;
+    const { writeLocked } = this.props;
 
     return (
       <div className="title-bar">
