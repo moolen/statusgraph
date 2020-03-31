@@ -16,6 +16,7 @@ func NewMemory() *MemStore {
 }
 
 func (d *MemStore) Save(key string, data *Stage) error {
+	storageOps.WithLabelValues("save").Inc()
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.data[key] = data
@@ -23,6 +24,7 @@ func (d *MemStore) Save(key string, data *Stage) error {
 }
 
 func (d *MemStore) Delete(key string) error {
+	storageOps.WithLabelValues("delete").Inc()
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	delete(d.data, key)
@@ -30,6 +32,7 @@ func (d *MemStore) Delete(key string) error {
 }
 
 func (d *MemStore) Load() ([]Stage, error) {
+	storageOps.WithLabelValues("load").Inc()
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	stages := make([]Stage, 0)
@@ -40,6 +43,7 @@ func (d *MemStore) Load() ([]Stage, error) {
 }
 
 func (d *MemStore) Reset() {
+	storageOps.WithLabelValues("reset").Inc()
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.data = make(map[string]*Stage)

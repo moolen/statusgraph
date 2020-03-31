@@ -35,6 +35,7 @@ func (d *DiskStore) Save(key string, data *Stage) error {
 	if err != nil {
 		return err
 	}
+	storageOps.WithLabelValues("save").Inc()
 	return json.NewEncoder(f).Encode(data)
 }
 
@@ -44,6 +45,7 @@ func (d *DiskStore) Delete(key string) error {
 		return err
 	}
 	fn := path.Join(d.RootDir, p)
+	storageOps.WithLabelValues("delete").Inc()
 	return os.Remove(fn)
 }
 
@@ -70,5 +72,6 @@ func (d *DiskStore) Load() ([]Stage, error) {
 			stages = append(stages, stage)
 			return nil
 		})
+	storageOps.WithLabelValues("load").Inc()
 	return stages, err
 }
