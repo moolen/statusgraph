@@ -107,11 +107,11 @@ mapping:
 
 ## TODO
 
+* [ ] add direction arrow to edge
+* [ ] highlight adjacent nodes & edges
 * [ ] graph-config library
-  * (3) implement config library with shapes
-        consider using draw.io shapes (AWS/GCP..)
-
-* [ ] R5 Misc. optimizations
+  * implement config library with shapes, consider using draw.io shapes (AWS/GCP..)
+* [ ] Misc. optimizations
   * metrics & alerts caching
   * decouple client and upstream requests
 
