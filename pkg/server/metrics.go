@@ -46,6 +46,7 @@ type RulesResponse struct {
 func FetchMetrics(cfg *config.ServerConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		availableServices := make(map[string]struct{})
+		errResponse := map[string]bool{"ok": false}
 		var payload MetricResponse
 		c := http.Client{
 			Timeout: 10 * time.Second,
@@ -58,13 +59,15 @@ func FetchMetrics(cfg *config.ServerConfig) http.HandlerFunc {
 				nil)
 			if err != nil {
 				log.Error(err)
-				json.NewEncoder(w).Encode(map[string]bool{"ok": false})
+				w.WriteHeader(http.StatusInternalServerError)
+				json.NewEncoder(w).Encode(errResponse)
 				return
 			}
 			res, err := c.Do(req)
 			if err != nil {
 				log.Error(err)
-				json.NewEncoder(w).Encode(map[string]bool{"ok": false})
+				w.WriteHeader(http.StatusInternalServerError)
+				json.NewEncoder(w).Encode(errResponse)
 				return
 			}
 			defer res.Body.Close()
@@ -76,7 +79,7 @@ func FetchMetrics(cfg *config.ServerConfig) http.HandlerFunc {
 			if err != nil {
 				log.Error(err)
 				w.WriteHeader(http.StatusInternalServerError)
-				json.NewEncoder(w).Encode(map[string]bool{"ok": false})
+				json.NewEncoder(w).Encode(errResponse)
 				return
 			}
 			// label values can be csv
@@ -94,7 +97,8 @@ func FetchMetrics(cfg *config.ServerConfig) http.HandlerFunc {
 			u, err := url.Parse(fmt.Sprintf("%s/api/v1/query_range", cfg.Upstream.Prometheus.URL))
 			if err != nil {
 				log.Error(err)
-				json.NewEncoder(w).Encode(map[string]bool{"ok": false})
+				w.WriteHeader(http.StatusInternalServerError)
+				json.NewEncoder(w).Encode(errResponse)
 				return
 			}
 			params := url.Values{}
@@ -110,13 +114,15 @@ func FetchMetrics(cfg *config.ServerConfig) http.HandlerFunc {
 				nil)
 			if err != nil {
 				log.Error(err)
-				json.NewEncoder(w).Encode(map[string]bool{"ok": false})
+				w.WriteHeader(http.StatusInternalServerError)
+				json.NewEncoder(w).Encode(errResponse)
 				return
 			}
 			res, err := c.Do(req)
 			if err != nil {
 				log.Error(err)
-				json.NewEncoder(w).Encode(map[string]bool{"ok": false})
+				w.WriteHeader(http.StatusInternalServerError)
+				json.NewEncoder(w).Encode(errResponse)
 				return
 			}
 			defer res.Body.Close()
@@ -125,7 +131,7 @@ func FetchMetrics(cfg *config.ServerConfig) http.HandlerFunc {
 			if err != nil {
 				log.Error(err)
 				w.WriteHeader(http.StatusInternalServerError)
-				json.NewEncoder(w).Encode(map[string]bool{"ok": false})
+				json.NewEncoder(w).Encode(errResponse)
 				return
 			}
 
@@ -177,7 +183,8 @@ func FetchMetrics(cfg *config.ServerConfig) http.HandlerFunc {
 		rulesRes, err := fetchRules(cfg)
 		if err != nil {
 			log.Error(err)
-			json.NewEncoder(w).Encode(map[string]bool{"ok": false})
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(errResponse)
 			return
 		}
 
