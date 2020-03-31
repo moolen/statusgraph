@@ -28,7 +28,6 @@ func GetGraph(s store.DataStore) http.HandlerFunc {
 
 func SaveStage(s store.DataStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
 		defer r.Body.Close()
 		var cfg store.Stage
 		err := json.NewDecoder(r.Body).Decode(&cfg)
@@ -38,7 +37,7 @@ func SaveStage(s store.DataStore) http.HandlerFunc {
 			json.NewEncoder(w).Encode(map[string]bool{"ok": false})
 			return
 		}
-		err = s.Save(vars["id"], &cfg)
+		err = s.Save(cfg.ID.String(), &cfg)
 		if err != nil {
 			log.Error(err)
 			w.WriteHeader(http.StatusInternalServerError)

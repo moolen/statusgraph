@@ -76,11 +76,20 @@ export class GraphUtils {
 
   // operates on the object reference
   static deserializeGraph(graph) {
+    if (graph.nodes == null) {
+      graph.nodes = [];
+    }
+
     graph.nodes.map(node => {
       node.type = GraphUtils.nodeStringToType(node.type);
 
       return node;
     });
+
+    if (graph.edges == null) {
+      graph.edges = [];
+    }
+
     graph.edges.map(edge => {
       edge.type = GraphUtils.edgeStringToType(edge.type);
       edge.source.type = GraphUtils.nodeStringToType(edge.source.type);
