@@ -132,7 +132,7 @@ func fetchMetrics(cfg *config.ServerConfig) (payload MetricResponse, errors erro
 					}
 					mt := time.Unix(int64(d), 0)
 					payload.Metrics[svc][query.Name] = append(payload.Metrics[svc][query.Name], TSValue{
-						Date:  mt.Format(time.RFC3339),
+						Date:  mt.UTC().Format(time.RFC3339),
 						Value: fv,
 					})
 				}

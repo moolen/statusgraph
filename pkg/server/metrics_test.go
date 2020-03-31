@@ -43,15 +43,15 @@ func TestFetchMetrics(t *testing.T) {
 			"Foobar": map[string][]TSValue{
 				"foo": []TSValue{
 					{
-						Date:  "52181-04-15T09:46:40+01:00",
+						Date:  "52181-04-15T08:46:40Z",
 						Value: 0,
 					},
 					{
-						Date:  "52181-04-15T09:46:40+01:00",
+						Date:  "52181-04-15T08:46:40Z",
 						Value: 0.5,
 					},
 					{
-						Date:  "52181-04-15T09:46:40+01:00",
+						Date:  "52181-04-15T08:46:40Z",
 						Value: 1,
 					},
 				},
