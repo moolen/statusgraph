@@ -35,7 +35,7 @@ export class Edge extends React.Component {
       xOff = -70;
     }
 
-    if (a < -2 || a > 2) {
+    if (a < -0.5 || a > 0.5) {
       xOff = 0;
       yOff = yDiff > 0 ? 30 : -30;
     }
