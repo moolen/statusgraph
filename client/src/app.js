@@ -14,8 +14,14 @@ class App extends React.Component {
 
   constructor(props) {
     super(props);
-    this.syncInterval = setInterval(this.sync.bind(this), 15000);
+    this.syncInterval = setInterval(this.sync.bind(this), 30000);
     this.sync();
+
+    fetch(`${window.baseUrl}/api/config/mapping`)
+      .then(res => res.json())
+      .then(json => {
+        return this.setState({ mapping: json });
+      });
   }
 
   sync() {
@@ -28,11 +34,6 @@ class App extends React.Component {
       .then(res => res.json())
       .then(json => {
         return this.setState({ metrics: json });
-      });
-    fetch(`${window.baseUrl}/api/config/mapping`)
-      .then(res => res.json())
-      .then(json => {
-        return this.setState({ mapping: json });
       });
     fetch(`${window.baseUrl}/api/services`)
       .then(res => res.json())
