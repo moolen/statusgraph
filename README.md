@@ -4,6 +4,13 @@ A status page for your distributed system.
 ![](./statusgraph-svc.png)
 ![](./statusgraph-shop.png)
 
+## TLDR;
+
+Try the UI (without colors):
+```
+$ docker run -it -p 8000:8000 quay.io/moolen/statusgraph:0.1.0 server
+```
+
 ## Overview
 This is a webapp that let's you visualize your system: create nodes and edges to draw your system architecture and signify dependencies. Annotate your services with Metrics and Alerts via `Prometheus` and `Alertmanager`.
 
@@ -86,9 +93,6 @@ mapping:
         service_label: service_id
 ```
 
-## Client
-TBD
-
 ## Roadmap
 #### graph import & streaming
 * i want to import the graph configuration from different file formats (plantuml, dot..)
@@ -103,39 +107,11 @@ TBD
 
 ## TODO
 
-* R1 Backend
-  * (x) pass mapping config to frontend (lookup idx)
-  * (x) store graph-data and graph-config on the server side
-  * (x) allow multiple stages (graph-data instances) to be rendered
-  * (7) make them editable through web UI (Overlay / ACE Editor or so)
-
-* R2 Graph UI
-  * (x) implement tooltip component
-  * (x) colorize node when alert matches
-  * (x) display alerts in a tooltip on hover
-  * (x) display metrics in a tooltip on hover
-    * (x) :sparkles: add sparkline for metrics
-
-  * R2.2 Node Clustering
-    * (x) group nodes in a cluster
-    * (x) move cluster
-
-* R3 node-editor UI
-  * (x) refactor node-editor in its own component
-  * (x) fix: force re-render after edit
-  * (x) edit: name, type, node_id
-  * (x) implement input validation & display errors
-  * (x) usability: auto focus service id on create
-  * (x) usability: handle enter to save
-  * (x) usability: handle hover with select
-  * (x) usability: handle escape for exit
-
-* R4 graph-config library
+* [ ] graph-config library
   * (3) implement config library with shapes
         consider using draw.io shapes (AWS/GCP..)
 
-
-* R5 Misc. optimizations
+* [ ] R5 Misc. optimizations
   * metrics & alerts caching
   * decouple client and upstream requests
 
