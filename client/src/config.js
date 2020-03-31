@@ -1,4 +1,5 @@
 import { Rect, Poly, Diamond, Service, Cluster, Edge } from './internal';
+import { Actor } from './nodes/actor';
 
 // node types
 export const NODE_TYPE_RECT = 'rect';
@@ -6,6 +7,7 @@ export const NODE_TYPE_POLY = 'poly';
 export const NODE_TYPE_DIAMOND = 'diamond';
 export const NODE_TYPE_SERVICE = 'service';
 export const NODE_TYPE_CLUSTER = 'cluster';
+export const NODE_TYPE_ACTOR = 'actor';
 
 export const nodeTypes = [
   NODE_TYPE_RECT,
@@ -13,6 +15,7 @@ export const nodeTypes = [
   NODE_TYPE_POLY,
   NODE_TYPE_DIAMOND,
   NODE_TYPE_CLUSTER,
+  NODE_TYPE_ACTOR,
 ];
 
 // render layers
@@ -47,6 +50,10 @@ export const NodeTypeMap = {
   [NODE_TYPE_CLUSTER]: {
     class: Cluster,
     layer: LAYER_BACKGROUND,
+  },
+  [NODE_TYPE_ACTOR]: {
+    class: Actor,
+    layer: LAYER_NODE,
   },
 };
 

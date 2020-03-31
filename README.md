@@ -107,8 +107,8 @@ mapping:
 
 ## TODO
 
-* [ ] add direction arrow to edge
-* [ ] highlight adjacent nodes & edges
+* [x] add direction arrow to edge
+* [x] highlight adjacent nodes & edges
 * [ ] graph-config library
   * implement config library with shapes, consider using draw.io shapes (AWS/GCP..)
 * [ ] Misc. optimizations

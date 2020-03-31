@@ -169,10 +169,10 @@ class Graph extends DebugComponent {
     }
 
     if (shiftKey) {
-      const x = GraphUtils.gridify(coords[0]);
-      const y = GraphUtils.gridify(coords[1]);
+      const x = GraphUtils.gridify(coords[0] - 50);
+      const y = GraphUtils.gridify(coords[1] - Rect.height / 2);
 
-      this.createNode(Rect.new(x, y, 'new node'));
+      this.createNode(Rect.new(x, y, 'node'));
     }
 
     this.setState({
@@ -729,13 +729,22 @@ class Graph extends DebugComponent {
       console.warn(`trying to render edge without type`, edge);
     }
 
+    let isSelected = this.state.selectedEdge == edge.id;
+
+    if (
+      edge.target.id == this.state.selectedNode ||
+      edge.source.id == this.state.selectedNode
+    ) {
+      isSelected = true;
+    }
+
     const element = (
       <edge.type
         edge={edge}
         from={from}
         to={to}
         onClick={this.onClickEdge}
-        selected={this.state.selectedEdge == edge.id ? true : false}
+        selected={isSelected}
       />
     );
 
@@ -925,11 +934,11 @@ class Graph extends DebugComponent {
           <svg className="graph">
             <defs>
               <marker
-                id="end-arrow"
+                id="mid-arrow"
                 viewBox={`0 -${10 / 2} ${10} ${10}`}
-                refX={`${10 / 2}`}
-                markerWidth={`${10}`}
-                markerHeight={`${10}`}
+                refX={`${-2}`}
+                markerWidth={`${5}`}
+                markerHeight={`${5}`}
                 orient="auto"
               >
                 <path

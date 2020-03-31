@@ -91,7 +91,7 @@ export class Edge extends React.Component {
         <path
           className={'edge-path ' + (selected ? 'selected' : '')}
           d={path}
-          //markerEnd="url(#end-arrow)"
+          markerMid="url(#mid-arrow)"
         />
         <path
           stroke="transparent"
