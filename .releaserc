@@ -9,6 +9,9 @@
     }],
     ["@semantic-release/exec", {
       "publishCmd": "make release version=${nextRelease.version}"
+    }],
+    ["@semantic-release/github", {
+      "assets": []
     }]
   ]
 }
