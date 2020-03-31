@@ -6,14 +6,64 @@ export class Tooltip extends React.Component {
   getMatchingAlerts() {
     const alerts = this.props.alerts || [];
     const node = this.props.node || {};
+    const mapping = this.props.mapping;
 
-    if (alerts.length == 0 || !node.name) {
+    if (alerts.length == 0 || !node.name || !mapping) {
       return [];
     }
 
-    // TODO: service_id should not be hard coded!
-    return alerts.filter(alert => alert.labels.service_id == node.name);
+    return alerts.filter(alert => {
+      const byLabel = mapping.alerts.service_labels.find(lbl => {
+        if (alert.labels[lbl]) {
+          return alert.labels[lbl]
+            .split(',')
+            .map(x => x.trim())
+            .includes(node.name);
+        }
+      });
+
+      if (byLabel) {
+        return true;
+      }
+
+      const byAnnotation = mapping.alerts.service_annotations.find(ann => {
+        if (alert.annotations[ann]) {
+          return alert.annotations[ann]
+            .split(',')
+            .map(x => x.trim())
+            .includes(node.name);
+        }
+      });
+
+      if (byAnnotation) {
+        return true;
+      }
+
+      return false;
+    });
   }
+
+  shortDuration = start => {
+    const d = 1000 * 60 * 60 * 24;
+    const h = 1000 * 60 * 60;
+    const m = 1000 * 60;
+    const sec = 1000;
+
+    const delta = Date.now() - new Date(start);
+
+    switch (true) {
+      case delta > d:
+        return `${Math.floor(delta / d)}d`;
+      case delta < d:
+        return `${Math.floor(delta / h)}h`;
+      case delta < h:
+        return `${Math.floor(delta / m)}m`;
+      case delta < m:
+        return `${Math.floor(delta / sec)}s`;
+      default:
+        return `${Math.floor(delta / sec)}ms`;
+    }
+  };
 
   componentDidMount() {
     this.props.container.setAttribute('width', '360px');
@@ -21,7 +71,7 @@ export class Tooltip extends React.Component {
   }
 
   render() {
-    let alerts = this.getMatchingAlerts();
+    const alerts = this.getMatchingAlerts();
     const metrics = this.props.metrics;
     const id = this.props.node ? this.props.node.id : '';
     const sid = this.props.node ? this.props.node.name : '';
@@ -41,14 +91,6 @@ export class Tooltip extends React.Component {
 
     const bbox = el.getBBox();
 
-    // remove certain labels
-    alerts = alerts.map(x => {
-      delete x.service_id;
-      delete x.alert_name;
-
-      return x;
-    });
-
     this.props.container.setAttribute('x', bbox.x + bbox.width);
     this.props.container.setAttribute('y', bbox.y + bbox.height / 2 - 26);
     this.props.visible
@@ -57,21 +99,15 @@ export class Tooltip extends React.Component {
 
     return (
       <div id="tooltip" className={this.props.visible ? 'visible' : ''}>
-        <div className="left-arrow"></div>
+        {/* <div className="left-arrow"></div> */}
         <div className="list-wrapper">
           <ul>
             {alerts.map(alert => (
               <li key={alert.fingerprint} className="alert-item">
-                {alert.labels.alertname}
-                <div className="label-list">
-                  {Object.keys(alert.labels).map(key => {
-                    return (
-                      <div className="label-item" key={alert.fingerprint + key}>
-                        {key}={alert.labels[key]}
-                      </div>
-                    );
-                  })}
-                </div>
+                <span>
+                  {alert.labels.alertname} ({this.shortDuration(alert.startsAt)}
+                </span>
+                )
               </li>
             ))}
             {Object.keys(viewMetrics).map(name => (

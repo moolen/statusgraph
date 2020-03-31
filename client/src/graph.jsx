@@ -69,6 +69,7 @@ class Graph extends DebugComponent {
             node={this.state.hoveredNode}
             alerts={this.props.alerts}
             metrics={this.props.metrics}
+            mapping={this.props.mapping}
           />
         </div>,
         this.tooltipContainer
@@ -328,6 +329,10 @@ class Graph extends DebugComponent {
   }
 
   onNodeDoubleClick = (node, x, y) => {
+    if (this.state.writeLocked) {
+      return;
+    }
+
     this.setState({
       editorNode: node,
     });

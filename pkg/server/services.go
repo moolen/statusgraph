@@ -119,8 +119,9 @@ func fetchServicesFromRules(cfg *config.ServerConfig) (serviceList []string, err
 	for _, grp := range rules.Data.Groups {
 		for _, r := range grp.Rules {
 			switch rule := r.(type) {
+			case prom.RecordingRule:
+				// NOOP
 			case prom.AlertingRule:
-				log.Infof("got a alerting rule: %#v", rule)
 				for k, v := range rule.Labels {
 					for _, svclbl := range cfg.Mapping.AlertConfig.ServiceLabels {
 						if string(k) == svclbl {
@@ -140,7 +141,7 @@ func fetchServicesFromRules(cfg *config.ServerConfig) (serviceList []string, err
 					}
 				}
 			default:
-				log.Infof("unknown rule type %s", r)
+				log.Warnf("unknown rule type %s", r)
 				continue
 			}
 		}

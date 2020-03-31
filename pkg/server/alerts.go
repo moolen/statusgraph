@@ -46,10 +46,7 @@ func FetchAlerts(cfg *config.ServerConfig) http.HandlerFunc {
 			json.NewEncoder(w).Encode([]string{})
 			return
 		}
-
-		log.Debugf("all alerts: %d", len(alerts))
 		alerts, err = filterAlerts(cfg.Mapping.AlertConfig, alerts)
-		log.Debugf("filtered alerts: %d", len(alerts))
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(alerts)

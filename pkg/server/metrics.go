@@ -73,7 +73,6 @@ func fetchMetrics(cfg *config.ServerConfig) (payload MetricResponse, errors erro
 		params.Add("end", strconv.Itoa(int(time.Now().Unix())))
 		params.Add("step", "60")
 		u.RawQuery = params.Encode()
-		log.Infof("q: %s", u)
 		upstreamTimer := prometheus.NewTimer(upstreamDuration.WithLabelValues("prometheus", "query_range"))
 		req, err := http.NewRequest(
 			"GET",
@@ -98,42 +97,45 @@ func fetchMetrics(cfg *config.ServerConfig) (payload MetricResponse, errors erro
 		}
 
 		for _, r := range m.Data.Result {
-			svc := r.Metric[query.ServiceLabel]
-			if svc == "" {
+			svcs := r.Metric[query.ServiceLabel]
+			if svcs == "" {
 				log.Warnf("query (%s) missing service label (%s)", query.Name, query.ServiceLabel)
 				continue
 			}
 
-			for _, v := range r.Value {
-				if len(v) != 2 {
-					log.Warnf("invalid metric value: %#v", v)
-					continue
+			for _, svc := range strings.Split(svcs, ",") {
+				svc = strings.Replace(svc, " ", "", -1)
+				for _, v := range r.Value {
+					if len(v) != 2 {
+						log.Warnf("invalid metric value: %#v", v)
+						continue
+					}
+					// 1st: timestamp
+					// 2nd: value
+					d, ok := v[0].(float64)
+					if !ok {
+						log.Warnf("invalid metric value. could not cast to string")
+						continue
+					}
+					val, ok := v[1].(string)
+					if !ok {
+						log.Warnf("invalid metric value. could not cast to string")
+						continue
+					}
+					if payload.Metrics[svc] == nil {
+						payload.Metrics[svc] = make(map[string][]TSValue)
+					}
+					fv, err := strconv.ParseFloat(val, 64)
+					if err != nil {
+						log.Warnf("invalid metric value. could not parse to float")
+						continue
+					}
+					mt := time.Unix(int64(d), 0)
+					payload.Metrics[svc][query.Name] = append(payload.Metrics[svc][query.Name], TSValue{
+						Date:  mt.Format(time.RFC3339),
+						Value: fv,
+					})
 				}
-				// 1st: timestamp
-				// 2nd: value
-				d, ok := v[0].(float64)
-				if !ok {
-					log.Warnf("invalid metric value. could not cast to string")
-					continue
-				}
-				val, ok := v[1].(string)
-				if !ok {
-					log.Warnf("invalid metric value. could not cast to string")
-					continue
-				}
-				if payload.Metrics[svc] == nil {
-					payload.Metrics[svc] = make(map[string][]TSValue)
-				}
-				fv, err := strconv.ParseFloat(val, 64)
-				if err != nil {
-					log.Warnf("invalid metric value. could not parse to float")
-					continue
-				}
-				mt := time.Unix(int64(d), 0)
-				payload.Metrics[svc][query.Name] = append(payload.Metrics[svc][query.Name], TSValue{
-					Date:  mt.Format(time.RFC3339),
-					Value: fv,
-				})
 			}
 
 		}

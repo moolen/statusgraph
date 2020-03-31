@@ -9,6 +9,7 @@ class App extends React.Component {
   state = {
     alerts: [],
     metrics: {},
+    services: {},
   };
 
   constructor(props) {
@@ -33,10 +34,15 @@ class App extends React.Component {
       .then(json => {
         return this.setState({ mapping: json });
       });
+    fetch(`${window.baseUrl}/api/services`)
+      .then(res => res.json())
+      .then(json => {
+        return this.setState({ services: json });
+      });
   }
 
   render() {
-    const { alerts, metrics, mapping } = this.state;
+    const { alerts, metrics, mapping, services } = this.state;
 
     return (
       <Router>
@@ -45,7 +51,12 @@ class App extends React.Component {
             exact={true}
             path="/"
             render={() => (
-              <Graph alerts={alerts} metrics={metrics} mapping={mapping} />
+              <Graph
+                alerts={alerts}
+                metrics={metrics}
+                mapping={mapping}
+                services={services}
+              />
             )}
           />
         </div>

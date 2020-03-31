@@ -38,7 +38,6 @@ func SaveStage(s store.DataStore) http.HandlerFunc {
 			json.NewEncoder(w).Encode(map[string]bool{"ok": false})
 			return
 		}
-		log.Infof("decoded payload: %#v", cfg)
 		err = s.Save(vars["id"], &cfg)
 		if err != nil {
 			log.Error(err)
