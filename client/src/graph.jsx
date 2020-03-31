@@ -191,6 +191,8 @@ class Graph extends DebugComponent {
       return;
     }
 
+    newNodePos = GraphUtils.getGridPosition(newNodePos);
+
     this.setState({
       selectedEdge: null,
       selectedNode: node.id,

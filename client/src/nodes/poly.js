@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 class Poly extends Rect {
   state = {};
-  static width = 92;
+  static width = 96;
   static height = 75;
   constructor(props) {
     super(props);
@@ -53,10 +53,10 @@ class Poly extends Rect {
           stroke="#ccc"
           strokeWidth=".5"
           fill={selected ? '#7379fc' : 'white'}
-          d="M0,36l18,-36l52,0l18,36l-18,36l-52,0z"
+          d="M0,36l20,-36l52,0l20,36l-20,36l-52,0z"
         ></path>
         <foreignObject width={Poly.width - 4} height={Poly.height}>
-          <div className="poly-text">
+          <div className="node-text poly">
             <span>{node.name}</span>
           </div>
         </foreignObject>

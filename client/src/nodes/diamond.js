@@ -62,15 +62,11 @@ export class Diamond extends Rect {
           />
         </g>
 
-        <text
-          className="node-text"
-          x={Diamond.width / 2}
-          y={Diamond.height / 2}
-          textAnchor="middle"
-          dominantBaseline="middle"
-        >
-          {node.name}
-        </text>
+        <foreignObject width={Diamond.width} height={Diamond.height}>
+          <div className="node-text diamond">
+            <span>{node.name}</span>
+          </div>
+        </foreignObject>
       </g>
     );
   }

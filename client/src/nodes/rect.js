@@ -1,11 +1,10 @@
 import * as d3 from 'd3';
 import * as React from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { GraphUtils } from '../utils';
 
 class Rect extends React.Component {
   state = {};
-  static width = 140;
+  static width = 128;
   static height = 40;
   constructor(props) {
     super(props);
@@ -26,10 +25,8 @@ class Rect extends React.Component {
   }
 
   static getConnectorPosition(node, edgeTarget) {
-    const width = Rect.calcWidth(node);
-
     return {
-      x: node.bounds.x + width / 2,
+      x: node.bounds.x + Rect.width / 2,
       y: node.bounds.y + Rect.height / 2,
     };
   }
@@ -102,16 +99,8 @@ class Rect extends React.Component {
     this.props.onMouseOut(this.props.node);
   };
 
-  static calcWidth(node) {
-    const width = GraphUtils.gridify(20 + node.name.length * 7);
-
-    return Math.max(96, width);
-  }
-
   render() {
     const { node, selected } = this.props;
-
-    const width = Rect.calcWidth(node);
 
     return (
       <g
@@ -125,20 +114,16 @@ class Rect extends React.Component {
           className={
             'node rect' + (selected ? ' selected ' : ' ') + this.props.highlight
           }
-          width={width}
+          width={Rect.width}
           height={Rect.height}
           rx="5"
           ry="5"
         />
-        <text
-          className="node-text"
-          x={width / 2}
-          y={Rect.height / 2}
-          textAnchor="middle"
-          dominantBaseline="middle"
-        >
-          {node.name}
-        </text>
+        <foreignObject width={Rect.width} height={Rect.height}>
+          <div className="node-text rect">
+            <span>{node.name}</span>
+          </div>
+        </foreignObject>
       </g>
     );
   }
