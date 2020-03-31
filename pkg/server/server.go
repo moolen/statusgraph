@@ -19,9 +19,9 @@ type Server struct {
 }
 
 // New ..
-func New(cfg *config.ServerConfig, staticDir string) *Server {
+func New(cfg *config.ServerConfig, staticDir, dataDir string) *Server {
 	router := mux.NewRouter()
-	s := store.NewDisk("./data")
+	s := store.NewDisk(dataDir)
 	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 	})
