@@ -1,0 +1,8 @@
+resources:
+- deployment.yaml
+- service.yaml
+
+configMapGenerator:
+- name: statusgraph-config
+  files:
+  - config.yaml

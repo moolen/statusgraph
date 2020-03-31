@@ -1,0 +1,40 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: statusgraph
+spec:
+  replicas: 1 # state is currently stored on-disk, consider using a PVC
+  template:
+    spec:
+      volumes:
+      - name: config-volume
+        configMap:
+          name: statusgraph-config
+      containers:
+      - name: manager
+        image: quay.io/moolen/statusgraph:latest
+        args:
+        - server
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/statusgraph/
+        resources:
+          limits:
+            cpu: 100m
+            memory: 150Mi
+          requests:
+            cpu: 100m
+            memory: 150Mi
+        ports:
+        - name: http
+          containerPort: 8000
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 8000
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 8000
+      terminationGracePeriodSeconds: 10

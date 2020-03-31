@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/moolen/statusgraph/pkg/config"
 	"github.com/moolen/statusgraph/pkg/store"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // Server ..
@@ -31,6 +32,7 @@ func New(cfg *config.ServerConfig, staticDir, dataDir string) *Server {
 	router.PathPrefix("/api/graph/{id}").HandlerFunc(SaveStage(s)).Methods("POST")
 	router.PathPrefix("/api/graph/{id}").HandlerFunc(DeleteStage(s)).Methods("DELETE")
 	router.PathPrefix("/api/graph").HandlerFunc(CreateStage(s)).Methods("POST")
+	router.Handle("/metrics", promhttp.Handler())
 
 	router.HandleFunc("/api/config/mapping", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

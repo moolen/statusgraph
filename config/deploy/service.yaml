@@ -1,0 +1,8 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: statusgraph
+spec:
+  ports:
+  - protocol: TCP
+    port: 8000

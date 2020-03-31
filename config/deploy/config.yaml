@@ -1,0 +1,21 @@
+upstream:
+  prometheus:
+    url: http://prometheus.svc.cluster.local:9090
+  alertmanager:
+    url: http://alertmanager.svc.cluster.local:9093
+
+mapping:
+  alerts:
+    label_selector:
+      - severity: "critical"
+      - severity: "warning"
+        important: "true"
+    service_labels:
+      - "service_id"
+  metrics:
+    service_labels:
+      - 'service_id'
+    queries:
+      - name: cpu wait
+        query: sum(rate(node_pressure_cpu_waiting_seconds_total[1m])) by (service_id) * 100
+        service_label: service_id
