@@ -27,6 +27,7 @@ type EdgeTarget struct {
 type Node struct {
 	ID        string          `json:"id"`
 	Name      string          `json:"name"`
+	Namespace string          `json:"namespace"`
 	Type      string          `json:"type"`
 	Labels    []string        `json:"labels"`
 	Connector []NodeConnector `json:"connector"`
