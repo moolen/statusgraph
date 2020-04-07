@@ -1,0 +1,7 @@
+metrics:
+  - name: service:availability:1h
+    labels:
+      service_id: cart.svc
+  - name: service:availability:1h
+    labels:
+      service_id: checkout.svc
