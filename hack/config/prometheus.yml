@@ -24,42 +24,4 @@ scrape_configs:
     scrape_timeout: 2s
     honor_labels: true
     static_configs:
-      - targets: ['cdn.eu:9100']
-        labels:
-          service_id: cdn.eu
-      - targets: ['cdn.us:9100']
-        labels:
-          service_id: cdn.us
-      - targets: ['cdn.sea:9100']
-        labels:
-          service_id: cdn.sea
-      - targets: ['edge.svc:9100']
-        labels:
-          service_id: edge.svc
-      - targets: ['frontend.svc:9100']
-        labels:
-          service_id: frontend.svc
-      - targets: ['orders.svc:9100']
-        labels:
-          service_id: orders.svc
-      - targets: ['catalog.svc:9100']
-        labels:
-          service_id: catalog.svc
-      - targets: ['cart.svc:9100']
-        labels:
-          service_id: cart.svc
-      - targets: ['cart-db.svc:9100']
-        labels:
-          service_id: cart-db.svc
-      - targets: ['checkout.svc:9100']
-        labels:
-          service_id: checkout.svc
-      - targets: ['shipping-portal.svc:9100']
-        labels:
-          service_id: shipping-portal.svc
-      - targets: ['payment.svc:9100']
-        labels:
-          service_id: payment.svc
-      - targets: ['customer.svc:9100']
-        labels:
-          service_id: customer.svc
+      - targets: ['prom-tester:3000']

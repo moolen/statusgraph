@@ -27,43 +27,5 @@ services:
       - 9093:9093
 
   # a bunch of test server
-  cdn.eu:
-    image: prom/node-exporter
-    restart: always
-  cdn.us:
-    image: prom/node-exporter
-    restart: always
-  cdn.sea:
-    image: prom/node-exporter
-    restart: always
-  edge.svc:
-    image: prom/node-exporter
-    restart: always
-  frontend.svc:
-    image: prom/node-exporter
-    restart: always
-  # comment out to trigger alert
-  #orders.svc:
-  #  image: prom/node-exporter
-  #  restart: always
-  catalog.svc:
-    image: prom/node-exporter
-    restart: always
-  cart.svc:
-    image: prom/node-exporter
-    restart: always
-  cart-db.svc:
-    image: prom/node-exporter
-    restart: always
-  checkout.svc:
-    image: prom/node-exporter
-    restart: always
-  shipping-portal.svc:
-    image: prom/node-exporter
-    restart: always
-  payment.svc:
-    image: prom/node-exporter
-    restart: always
-  customer.svc:
-    image: prom/node-exporter
-    restart: always
+  prom-tester:
+    build: ../test/prom-tester

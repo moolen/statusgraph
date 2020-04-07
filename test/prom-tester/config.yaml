@@ -1,7 +1,40 @@
 metrics:
   - name: service:availability:1h
     labels:
+      service_id: cdn.eu
+  - name: service:availability:1h
+    labels:
+      service_id: cdn.us
+  - name: service:availability:1h
+    labels:
+      service_id: cdn.sea
+  - name: service:availability:1h
+    labels:
+      service_id: edge.svc
+  - name: service:availability:1h
+    labels:
+      service_id: frontend.svc
+  - name: service:availability:1h
+    labels:
+      service_id: orders.svc
+  - name: service:availability:1h
+    labels:
+      service_id: catalog.svc
+  - name: service:availability:1h
+    labels:
       service_id: cart.svc
   - name: service:availability:1h
     labels:
+      service_id: cart-db.svc
+  - name: service:availability:1h
+    labels:
       service_id: checkout.svc
+  - name: service:availability:1h
+    labels:
+      service_id: shipping-portal.svc
+  - name: service:availability:1h
+    labels:
+      service_id: payment.svc
+  - name: service:availability:1h
+    labels:
+      service_id: customer.svc
