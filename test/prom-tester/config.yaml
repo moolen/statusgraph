@@ -38,3 +38,18 @@ metrics:
   - name: service:availability:1h
     labels:
       service_id: customer.svc
+  - name: service:availability:1h
+    labels:
+      service_id: recommend.svc
+  - name: service:availability:1h
+    labels:
+      service_id: ad.svc
+  - name: service:availability:1h
+    labels:
+      service_id: currency.svc
+  - name: service:availability:1h
+    labels:
+      service_id: email.svc
+  - name: service:availability:1h
+    labels:
+      service_id: load-gen.svc
