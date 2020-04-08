@@ -22,6 +22,7 @@ type config struct {
 type metric struct {
 	Name   string            `yaml:"name"`
 	Labels map[string]string `yaml:"labels"`
+	Value  *float64          `yaml:"value"`
 	gauge  prometheus.Gauge
 }
 
@@ -39,7 +40,11 @@ func main() {
 	go func() {
 		for {
 			for _, metric := range cfg.Metrics {
-				metric.gauge.Set(rand.Float64())
+				if metric.Value != nil {
+					metric.gauge.Set(*metric.Value)
+				} else {
+					metric.gauge.Set(rand.Float64())
+				}
 			}
 			<-time.After(time.Second * 3)
 		}

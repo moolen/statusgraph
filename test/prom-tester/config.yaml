@@ -36,6 +36,7 @@ metrics:
     labels:
       service_id: payment.svc
   - name: service:availability:1h
+    value: 0.000
     labels:
       service_id: customer.svc
   - name: service:availability:1h
@@ -51,5 +52,6 @@ metrics:
     labels:
       service_id: email.svc
   - name: service:availability:1h
+    value: 0.9999
     labels:
       service_id: load-gen.svc

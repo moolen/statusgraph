@@ -20,10 +20,10 @@ groups:
 
   # example rule with explicit service mapping
   - alert: service_down
-    expr: up{service_id="orders.svc"} == 0
+    expr: vector(1)
     labels:
       severity: critical
-      service_id: "orders.svc"
+      service_id: "customer.svc"
     annotations:
       description: Service {{ $labels.instance }} is unavailable.
       value: DOWN ({{ $value }})
