@@ -115,7 +115,7 @@ mapping:
   * decouple client and upstream requests
 * [ ] implement UI tests
 * [ ] comprehensive documentation w/ examples
-* [ ] enhance integration-test (custom prom-exporter for testing purposes)
+* [x] enhance integration-test (custom prom-exporter for testing purposes)
 
 ## Developing
 
