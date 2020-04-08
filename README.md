@@ -1,7 +1,6 @@
 # Statusgraph
 A status page for your distributed system.
 
-![](./statusgraph-svc.png)
 ![](./statusgraph-shop.png)
 
 ## TLDR;
