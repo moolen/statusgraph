@@ -82,14 +82,14 @@ export class Edge extends React.Component {
   };
 
   render() {
-    const { from, to, selected } = this.props;
+    const { from, to, selected, highlight } = this.props;
     const pathData = this.calculatePathData(from, to);
     const path = Edge.lineFunction(pathData);
 
     return (
       <g>
         <path
-          className={'edge-path ' + (selected ? 'selected' : '')}
+          className={`edge-path ${highlight} ` + (selected ? 'selected' : '')}
           d={path}
           markerMid="url(#mid-arrow)"
         />

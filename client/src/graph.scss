@@ -87,7 +87,13 @@
 .edge-path{
     fill: none;
     &.selected{
-        stroke: #5c9fd6;
+      stroke: darken($blue, 20%);
+    }
+    &.ok {
+      stroke: $green;
+    }
+    &.alert {
+      stroke: $red;
     }
 }
 .edge-clickable{

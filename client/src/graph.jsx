@@ -162,11 +162,11 @@ class Graph extends DebugComponent {
     const { shiftKey } = event;
     const coords = d3.mouse(d3.event.target);
 
-    this.setState({ selectedNode: hoveredNode ? hoveredNode.id : null });
-
     if (this.state.writeLocked) {
       return;
     }
+
+    this.setState({ selectedNode: hoveredNode ? hoveredNode.id : null });
 
     if (shiftKey) {
       const x = GraphUtils.gridify(coords[0] - 50);
@@ -255,12 +255,14 @@ class Graph extends DebugComponent {
     cancelAnimationFrame(this.hoverNodeTimeout);
     this.hoverNodeTimeout = requestAnimationFrame(() => {
       this.setState({ hoveredNode: node });
+      this.renderEdges();
     });
   };
   onNodeMouseOut = node => {
     cancelAnimationFrame(this.hoverNodeTimeout);
     this.hoverNodeTimeout = requestAnimationFrame(() => {
       this.setState({ hoveredNode: null });
+      this.renderEdges();
     });
   };
 
@@ -592,6 +594,14 @@ class Graph extends DebugComponent {
   getHighlight(node) {
     const { alerts, services, mapping } = this.props;
 
+    if (!node) {
+      return '';
+    }
+
+    if (!mapping) {
+      return '';
+    }
+
     // the alert map have csv in their service label
     const hasAlert =
       alerts.find(alert => {
@@ -740,6 +750,32 @@ class Graph extends DebugComponent {
       isSelected = true;
     }
 
+    let highlight = '';
+
+    if (
+      this.state.hoveredNode &&
+      (this.state.hoveredNode.id == edge.target.id ||
+        this.state.hoveredNode.id == edge.source.id)
+    ) {
+      const sNode = GraphUtils.getNodeByID(
+        this.state.graph.nodes,
+        edge.source.id
+      );
+      const dNode = GraphUtils.getNodeByID(
+        this.state.graph.nodes,
+        edge.target.id
+      );
+
+      if (
+        this.getHighlight(sNode) == 'alert' ||
+        this.getHighlight(dNode) == 'alert'
+      ) {
+        highlight = 'alert';
+      } else {
+        highlight = 'ok';
+      }
+    }
+
     const element = (
       <edge.type
         edge={edge}
@@ -747,6 +783,7 @@ class Graph extends DebugComponent {
         to={to}
         onClick={this.onClickEdge}
         selected={isSelected}
+        highlight={highlight}
       />
     );
 
