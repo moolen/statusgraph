@@ -1,0 +1,5 @@
+baseURL = "http://moolen.github.io/statusgraph"
+languageCode = "en-us"
+title = "Statusgraph"
+pygmentsCodeFences = true
+staticDir = ["static"]
