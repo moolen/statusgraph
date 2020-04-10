@@ -1,5 +1,6 @@
 IMAGE_REPO = quay.io/moolen/statusgraph
 IMG ?= ${IMAGE_REPO}:${version}
+HUGO=bin/hugo
 
 .PHONY: binary
 binary: bin
@@ -25,3 +26,15 @@ docker-push-latest:
 docker-release: docker-build docker-push docker-push-latest
 
 release: docker-release
+
+.PHONY: docs
+docs: bin/hugo
+	cd docs_src; ../$(HUGO) --theme book --destination ../docs
+
+docs-live: bin/hugo
+	cd docs_src; ../$(HUGO) server --minify --theme book
+
+
+bin/hugo:
+	curl -sL https://github.com/gohugoio/hugo/releases/download/v0.57.2/hugo_extended_0.57.2_Linux-64bit.tar.gz | tar -xz -C /tmp/
+	mkdir bin; cp /tmp/hugo bin/hugo
