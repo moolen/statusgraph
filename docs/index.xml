@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Welcome on Statusgraph</title>
+    <link>http://moolen.github.io/statusgraph/</link>
+    <description>Recent content in Welcome on Statusgraph</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="http://moolen.github.io/statusgraph/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title></title>
+      <link>http://moolen.github.io/statusgraph/docs/configuration/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>http://moolen.github.io/statusgraph/docs/configuration/</guid>
+      <description>Configuration </description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>http://moolen.github.io/statusgraph/docs/getting_started/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>http://moolen.github.io/statusgraph/docs/getting_started/</guid>
+      <description>Getting Started What is Statusgraph? Installation Prerequisites Prometheus Alertmanager Deployment Next steps You may want to check out the the Usage Examples or Configuration.</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>http://moolen.github.io/statusgraph/docs/spec/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>http://moolen.github.io/statusgraph/docs/spec/</guid>
+      <description>Spec </description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>http://moolen.github.io/statusgraph/docs/usage/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>http://moolen.github.io/statusgraph/docs/usage/</guid>
+      <description>Usage examples </description>
+    </item>
+    
+  </channel>
+</rss>
