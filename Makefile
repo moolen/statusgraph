@@ -36,5 +36,5 @@ docs-live: bin/hugo
 
 
 bin/hugo:
-	curl -sL https://github.com/gohugoio/hugo/releases/download/v0.57.2/hugo_extended_0.57.2_Linux-64bit.tar.gz | tar -xz -C /tmp/
+	curl -sL https://github.com/gohugoio/hugo/releases/download/v0.69.0/hugo_extended_0.69.0_Linux-64bit.tar.gz | tar -xz -C /tmp/
 	mkdir bin; cp /tmp/hugo bin/hugo
