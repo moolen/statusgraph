@@ -6,6 +6,10 @@ HUGO=bin/hugo
 binary: bin
 	go build -o bin/statusgraph ./main.go
 
+.PHONY: client
+client:
+	cd client/ && npm install && npm run build:prod
+
 .PHONY: test
 test:
 	go test -v -cover ./...
