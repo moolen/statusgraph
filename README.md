@@ -10,87 +10,12 @@ Try the UI (without colors):
 $ docker run -it -p 8000:8000 quay.io/moolen/statusgraph:latest server
 ```
 
-## Overview
-This is a webapp that let's you visualize your system: create nodes and edges to draw your system architecture and signify dependencies. Annotate your services with Metrics and Alerts via `Prometheus` and `Alertmanager`.
+## Install & Documentation
 
-Conceptually, you want to know if your service is "running", i.e. it is in a binary state: `red` lamp vs. `green` lamp.
-This question is incredibly hard to answer. Statusgraph taks this approach: you define alerts via Prometheus which indicate a red/yellow lamp (service is dead / not available / has issues ..).
-Additionally, you can map metrics
+Docs are here: https://moolen.github.io/statusgraph/
 
-Alert Example:
-
-```yaml
-- alert: service_down
-    expr: up == 0
-    labels:
-      severity: critical
-      service_id: "{{ $labels.service_id }}" # this is known at alert-time
-    annotations:
-      description: Service {{ $labels.instance }} is unavailable.
-      runbook: "http://example.com/foobar"
-```
-
-## Requirements
-* alertmanager v0.20.0 and above
-* prometheus
-
-## use-cases
-
-You can visualize many different aspects of your environment.
-* 10.000ft view of your distributed system
-* self-contained system of a single team (a bunch of services, databases)
-* network aspects: CDN, DNS & Edge services
-* end-user view: edge services, blackbox tests
-* Data engineering pipeline: visualize DAGs / ETL Metrics
-
-## Components
-## Server
-* communicates with prometheus to map metrics to a particular service (think: availability, error rate)
-* asks alertmanager for active alerts
-
-### Server Configuration
-* contains the configuration for upstream
-* contains the mapping for alerts and metrics
-
-```yaml
-upstream:
-  prometheus:
-    url: http://localhost:9090
-  alertmanager:
-    url: http://localhost:9093
-
-mapping:
-  # this defines how we select alerts to display
-  # use a `labelSelector` to filter
-  # and `map` to specify the lookup key in the alert struct
-  alerts:
-    label_selector:
-      - severity: "critical"
-      - severity: "warning"
-        important: "true"
-
-    # red & green lamp indicator
-    # Use this if your alerts use a specific label for a service (e.g. app=frontend / app=backend ...)
-    # this tells statusgraph to map alerts to nodes using the following labels/annotations
-    service_labels:
-      - "service_id"
-    service_annotations:
-      - "statusgraph-node"
-
-  metrics:
-
-    # green lamp indicator!
-    # this helps statusgraph to find all existing services by fetching the label values
-    # reference: https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values
-    service_labels:
-      - 'service_id'
-
-    queries:
-      # just as an example
-      - name: cpu wait
-        query: sum(rate(node_pressure_cpu_waiting_seconds_total[1m])) by (service_id) * 100
-        service_label: service_id
-```
+## Status
+This is an experimental app.
 
 ## Roadmap
 #### graph import & streaming
