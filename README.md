@@ -39,7 +39,7 @@ This is an experimental app.
   * metrics & alerts caching
   * decouple client and upstream requests
 * [ ] implement UI tests
-* [ ] comprehensive documentation w/ examples
+* [~] comprehensive documentation w/ examples
 * [x] enhance integration-test (custom prom-exporter for testing purposes)
 
 ## Developing
