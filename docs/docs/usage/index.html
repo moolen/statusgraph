@@ -4,15 +4,21 @@
 <head>
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Usage examples "><meta property="og:title" content="" />
-<meta property="og:description" content="Usage examples " />
+<meta name="description" content="Usage examples Tutorial use-case: colorizing the nodes Let&rsquo;s take a look at the following very simple graph:
+[frontend] --&gt; [backend] Both services expose a metric http_request_latency_seconds:mean5m with labels app=frontend and app=backend.
+And let&rsquo;s consider the following Alert rule as an real life™ example.
+groups: - name: Backend rules: - alert: HighRequestLatency expr: http_request_latency_seconds:mean5m{app=&#34;backend&#34;} &gt; 0.5 for: 10m labels: severity: critical # &lt;--- we only want to display alerts with severity=critical service_id: backend # &lt;--- this is a node in our graph annotations: summary: High request latency The following mapping does this:"><meta property="og:title" content="" />
+<meta property="og:description" content="Usage examples Tutorial use-case: colorizing the nodes Let&rsquo;s take a look at the following very simple graph:
+[frontend] --&gt; [backend] Both services expose a metric http_request_latency_seconds:mean5m with labels app=frontend and app=backend.
+And let&rsquo;s consider the following Alert rule as an real life™ example.
+groups: - name: Backend rules: - alert: HighRequestLatency expr: http_request_latency_seconds:mean5m{app=&#34;backend&#34;} &gt; 0.5 for: 10m labels: severity: critical # &lt;--- we only want to display alerts with severity=critical service_id: backend # &lt;--- this is a node in our graph annotations: summary: High request latency The following mapping does this:" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="http://moolen.github.io/statusgraph/docs/usage/" />
 
 <title>Usage | Statusgraph</title>
 <link rel="icon" href="/statusgraph/favicon.png" type="image/x-icon">
 <link rel="stylesheet" href="/statusgraph/book.min.284c8fc21ced13c579d9027a9d14893c56b243c6045001180391cebb4cc36ab8.css" integrity="sha256-KEyPwhztE8V52QJ6nRSJPFayQ8YEUAEYA5HOu0zDarg=">
-<script defer src="/statusgraph/en.search.min.e0c8b2765f15ccacfe2e5a46e64ca0326cf1d12ef83f09d3e56b3045b95050ab.js" integrity="sha256-4Miydl8VzKz&#43;LlpG5kygMmzx0S74PwnT5WswRblQUKs="></script>
+<script defer src="/statusgraph/en.search.min.7b8812aea25efa4b9d47374137c0784940195c7891a19f7bb5014842852ad610.js" integrity="sha256-e4gSrqJe&#43;kudRzdBN8B4SUAZXHiRoZ97tQFIQoUq1hA="></script>
 <!--
 Made with Book Theme
 https://github.com/alex-shpak/hugo-book
@@ -84,16 +90,6 @@ https://github.com/alex-shpak/hugo-book
         <li>
           
   
-    <a href="/statusgraph/docs/spec/" class="">Spec</a>
-  
-
-        </li>
-      
-    
-      
-        <li>
-          
-  
     <a href="/statusgraph/docs/usage/" class="active">Usage</a>
   
 
@@ -148,7 +144,13 @@ https://github.com/alex-shpak/hugo-book
     <input type="checkbox" class="hidden" id="toc-control" />
     <aside class="hidden clearfix">
       
-  <nav id="TableOfContents"></nav>
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#tutorial-use-case-colorizing-the-nodes">Tutorial use-case: colorizing the nodes</a></li>
+    <li><a href="#matching-multiple-nodes-in-a-graph">Matching multiple nodes in a graph</a></li>
+    <li><a href="#generic-alerts">Generic Alerts</a></li>
+  </ul>
+</nav>
 
 
     </aside>
@@ -159,7 +161,76 @@ https://github.com/alex-shpak/hugo-book
       
       
   <article class="markdown"><h1 id="usage-examples">Usage examples</h1>
-</article>
+<h2 id="tutorial-use-case-colorizing-the-nodes">Tutorial use-case: colorizing the nodes</h2>
+<p>Let&rsquo;s take a look at the following very simple graph:</p>
+<pre><code>[frontend] --&gt; [backend]
+</code></pre><p>Both services expose a metric <code>http_request_latency_seconds:mean5m</code> with labels <code>app=frontend</code> and <code>app=backend</code>.</p>
+<p>And let&rsquo;s consider the following Alert rule as an <strong>real life™</strong> example.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#66d9ef">groups</span>:
+- <span style="color:#66d9ef">name</span>: Backend
+  <span style="color:#66d9ef">rules</span>:
+  - <span style="color:#66d9ef">alert</span>: HighRequestLatency
+    <span style="color:#66d9ef">expr</span>: http_request_latency_seconds:mean5m{app=<span style="color:#e6db74">&#34;backend&#34;</span>} &gt; <span style="color:#ae81ff">0.5</span>
+    <span style="color:#66d9ef">for</span>: 10m
+    <span style="color:#66d9ef">labels</span>:
+      <span style="color:#66d9ef">severity</span>: critical   <span style="color:#75715e"># &lt;--- we only want to display alerts with severity=critical</span>
+      <span style="color:#66d9ef">service_id</span>: backend <span style="color:#75715e"># &lt;--- this is a node in our graph</span>
+    <span style="color:#66d9ef">annotations</span>:
+      <span style="color:#66d9ef">summary</span>: High request latency
+</code></pre></div><p>The following mapping does this:</p>
+<ol>
+<li>only take alerts with <code>severity=critical</code> into consideration and</li>
+<li>the value of label <code>service_id</code> points to a node in our graph</li>
+</ol>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#66d9ef">endpoints</span>: {} <span style="color:#75715e"># ...</span>
+<span style="color:#66d9ef">metrics</span>: {} <span style="color:#75715e"># ...</span>
+<span style="color:#66d9ef">mapping</span>:
+  <span style="color:#66d9ef">alerts</span>:
+    <span style="color:#66d9ef">label_selector</span>:
+      - <span style="color:#66d9ef">severity</span>: <span style="color:#e6db74">&#34;critical&#34;</span>
+    <span style="color:#66d9ef">service_labels</span>:
+      - <span style="color:#e6db74">&#34;service_id&#34;</span>
+</code></pre></div><p>When this alert is firing, the <code>backend</code> will be <strong>red</strong>. pretty straight forward.
+When the alert is NOT firing the <code>backend</code> will be <strong>green</strong>.</p>
+<p>The frontend though will not be colorized in any way <strong>because there is no mapping for it</strong>.</p>
+<p>How can we get this service green then? No, you don&rsquo;t have to define an alert for each service explicitly (tho you can do it of course!).
+What you need is a <code>common label</code> that has all the available services as values. If you configured prometheus properly™ you have those labels already. In this tutorial we have <code>http_request_latency_seconds:mean5m</code> with labels <code>app=frontend</code> and <code>app=backend</code> (see above).</p>
+<p>Use the <code>mapping.metrics.service_labels[]</code> config to tell statusgraph to lookup all values for label <code>app</code>.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#66d9ef">endpoints</span>: {} <span style="color:#75715e"># ...</span>
+<span style="color:#66d9ef">metrics</span>: {} <span style="color:#75715e"># ...</span>
+<span style="color:#66d9ef">mapping</span>:
+  <span style="color:#66d9ef">metrics</span>:
+    <span style="color:#66d9ef">service_labels</span>:
+      - app
+</code></pre></div><p>If you don&rsquo;t have these labels yet, configure metric re-labeling (see <a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config">here</a> and <a href="https://medium.com/quiq-blog/prometheus-relabeling-tricks-6ae62c56cbda">here</a>). As a last resort you can consider using <a href="https://prometheus.io/docs/prometheus/latest/querying/functions/#label_replace">label_replace</a> with recorded rules.</p>
+<h2 id="matching-multiple-nodes-in-a-graph">Matching multiple nodes in a graph</h2>
+<p>Complex systems fail in complex ways. For example, a http request may fail during DNS resolution, when doing a TCP handshake or if the wrong HTTP  status code is sent from the server. Thus, a simple alert may affect multiple nodes in the graph depending on your level abstraction.</p>
+<p>This use-case is supported using csv in label values (yes, it&rsquo;s hacky. but that&rsquo;s how the prom spec is):</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#66d9ef">groups</span>:
+- <span style="color:#66d9ef">name</span>: Backend
+  <span style="color:#66d9ef">rules</span>:
+  - <span style="color:#66d9ef">alert</span>: StupidHooman
+    <span style="color:#66d9ef">expr</span>: all_cables_unplugged &gt; <span style="color:#ae81ff">0</span>
+    <span style="color:#66d9ef">for</span>: 5m
+    <span style="color:#66d9ef">labels</span>:
+      <span style="color:#66d9ef">severity</span>: critical
+      <span style="color:#66d9ef">service_id</span>: frontend,backend <span style="color:#75715e"># use this to colorize 2 graph nodes at the same time</span>
+    <span style="color:#66d9ef">annotations</span>:
+      <span style="color:#66d9ef">summary</span>: High request latency
+</code></pre></div><h2 id="generic-alerts">Generic Alerts</h2>
+<p>You can define generic alerts which re-use labels of a metric that</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#66d9ef">groups</span>:
+- <span style="color:#66d9ef">name</span>: Backend
+  <span style="color:#66d9ef">rules</span>:
+  - <span style="color:#66d9ef">alert</span>: HighRequestLatency
+    <span style="color:#66d9ef">expr</span>: http_request_latency_seconds:mean5m{app=<span style="color:#e6db74">&#34;backend&#34;</span>} &gt; <span style="color:#ae81ff">0.5</span>
+    <span style="color:#66d9ef">for</span>: 10m
+    <span style="color:#66d9ef">labels</span>:
+      <span style="color:#66d9ef">severity</span>: critical   <span style="color:#75715e"># &lt;--- we only want to display alerts with severity=critical</span>
+      <span style="color:#66d9ef">service_id</span>: <span style="color:#e6db74">&#34;{{ $labels.service_id }}&#34;</span> <span style="color:#75715e"># &lt;--- this is a node in our graph</span>
+    <span style="color:#66d9ef">annotations</span>:
+      <span style="color:#66d9ef">summary</span>: High request latency
+</code></pre></div></article>
  
       
 
@@ -191,7 +262,13 @@ https://github.com/alex-shpak/hugo-book
     
     <aside class="book-toc">
       
-  <nav id="TableOfContents"></nav>
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#tutorial-use-case-colorizing-the-nodes">Tutorial use-case: colorizing the nodes</a></li>
+    <li><a href="#matching-multiple-nodes-in-a-graph">Matching multiple nodes in a graph</a></li>
+    <li><a href="#generic-alerts">Generic Alerts</a></li>
+  </ul>
+</nav>
 
  
     </aside>

@@ -4,15 +4,19 @@
 <head>
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Getting Started What is Statusgraph? Installation Prerequisites Prometheus Alertmanager Deployment Next steps You may want to check out the the Usage Examples or Configuration."><meta property="og:title" content="" />
-<meta property="og:description" content="Getting Started What is Statusgraph? Installation Prerequisites Prometheus Alertmanager Deployment Next steps You may want to check out the the Usage Examples or Configuration." />
+<meta name="description" content="Getting Started What is Statusgraph? Statusgraph is the status page for your distributed system. It lets you visualize components and dependencies of your system and indicates their status.
+Conceptually, you want to know if your service is &ldquo;running&rdquo;, i.e. it is in a binary state: red lamp vs. green lamp. This question is incredibly hard to answer. Statusgraph takes this approach:
+ define alerts in Prometheus. They tell us when a services is considered in a &ldquo;red&rdquo; state (service is dead / not available / has issues ."><meta property="og:title" content="" />
+<meta property="og:description" content="Getting Started What is Statusgraph? Statusgraph is the status page for your distributed system. It lets you visualize components and dependencies of your system and indicates their status.
+Conceptually, you want to know if your service is &ldquo;running&rdquo;, i.e. it is in a binary state: red lamp vs. green lamp. This question is incredibly hard to answer. Statusgraph takes this approach:
+ define alerts in Prometheus. They tell us when a services is considered in a &ldquo;red&rdquo; state (service is dead / not available / has issues ." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="http://moolen.github.io/statusgraph/docs/getting_started/" />
 
 <title>Getting Started | Statusgraph</title>
 <link rel="icon" href="/statusgraph/favicon.png" type="image/x-icon">
 <link rel="stylesheet" href="/statusgraph/book.min.284c8fc21ced13c579d9027a9d14893c56b243c6045001180391cebb4cc36ab8.css" integrity="sha256-KEyPwhztE8V52QJ6nRSJPFayQ8YEUAEYA5HOu0zDarg=">
-<script defer src="/statusgraph/en.search.min.e0c8b2765f15ccacfe2e5a46e64ca0326cf1d12ef83f09d3e56b3045b95050ab.js" integrity="sha256-4Miydl8VzKz&#43;LlpG5kygMmzx0S74PwnT5WswRblQUKs="></script>
+<script defer src="/statusgraph/en.search.min.7b8812aea25efa4b9d47374137c0784940195c7891a19f7bb5014842852ad610.js" integrity="sha256-e4gSrqJe&#43;kudRzdBN8B4SUAZXHiRoZ97tQFIQoUq1hA="></script>
 <!--
 Made with Book Theme
 https://github.com/alex-shpak/hugo-book
@@ -84,16 +88,6 @@ https://github.com/alex-shpak/hugo-book
         <li>
           
   
-    <a href="/statusgraph/docs/spec/" class="">Spec</a>
-  
-
-        </li>
-      
-    
-      
-        <li>
-          
-  
     <a href="/statusgraph/docs/usage/" class="">Usage</a>
   
 
@@ -151,16 +145,15 @@ https://github.com/alex-shpak/hugo-book
   <nav id="TableOfContents">
   <ul>
     <li><a href="#what-is-statusgraph">What is Statusgraph?</a></li>
-  </ul>
-
-  <ul>
-    <li><a href="#prerequisites">Prerequisites</a>
+    <li><a href="#high-level-architecture">High-Level Architecture</a></li>
+    <li><a href="#installation">Installation</a>
       <ul>
-        <li><a href="#prometheus">Prometheus</a></li>
-        <li><a href="#alertmanager">Alertmanager</a></li>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#docker">Docker</a></li>
+        <li><a href="#kubernetes-kustomize--helm">Kubernetes, Kustomize &amp; Helm</a></li>
+        <li><a href="#from-source">From Source</a></li>
       </ul>
     </li>
-    <li><a href="#deployment">Deployment</a></li>
   </ul>
 </nav>
 
@@ -174,12 +167,51 @@ https://github.com/alex-shpak/hugo-book
       
   <article class="markdown"><h1 id="getting-started">Getting Started</h1>
 <h2 id="what-is-statusgraph">What is Statusgraph?</h2>
-<h1 id="installation">Installation</h1>
-<h2 id="prerequisites">Prerequisites</h2>
-<h3 id="prometheus">Prometheus</h3>
-<h3 id="alertmanager">Alertmanager</h3>
-<h2 id="deployment">Deployment</h2>
-<h1 id="next-steps">Next steps</h1>
+<p><img src="http://moolen.github.io/statusgraph
+/screen-shop.png" alt="Statusgraph Overview" /></p>
+<p>Statusgraph is the status page for your distributed system. It lets you visualize components and dependencies of your system and indicates their status.</p>
+<p>Conceptually, you want to know if your service is &ldquo;running&rdquo;, i.e. it is in a binary state: red lamp vs. green lamp. This question is incredibly hard to answer. Statusgraph takes this approach:</p>
+<ol>
+<li>define alerts in Prometheus. They tell us when a services is considered in a &ldquo;red&rdquo; state (service is dead / not available / has issues ..).</li>
+<li>tell statusgraph how to lookup services (services is in the &ldquo;green&rdquo; state)</li>
+<li>map metrics to services</li>
+</ol>
+<p>You can visualize many different aspects of your environment.</p>
+<ul>
+<li>10.000ft view of your distributed system</li>
+<li>self-contained system of a single team (a bunch of services, databases)</li>
+<li>network aspects: CDN, DNS &amp; Edge services</li>
+<li>end-user view: edge services, blackbox tests</li>
+<li>Data engineering pipeline: visualize DAGs / ETL Metrics</li>
+</ul>
+<h2 id="high-level-architecture">High-Level Architecture</h2>
+<p><img src="http://moolen.github.io/statusgraph
+/statusgraph-overview.png" alt="Statusgraph Overview" /></p>
+<h2 id="installation">Installation</h2>
+<p><strong>BEWARE</strong>: state is currently stored on disk (a bunch of json files). HA setup is not yet supported.</p>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li>alertmanager v0.20.0 and above</li>
+<li>prometheus</li>
+</ul>
+<h3 id="docker">Docker</h3>
+<p>Docker Images are available on quay.io: <code>quay.io/moolen/statusgraph:latest</code>.</p>
+<pre><code>$ docker run -it -p 8000:8000 quay.io/moolen/statusgraph:latest server
+</code></pre><h3 id="kubernetes-kustomize--helm">Kubernetes, Kustomize &amp; Helm</h3>
+<p>This repository contains kustomize manifests. See <code>config/default</code> directory:</p>
+<pre><code>$ git clone git@github.com:moolen/statusgraph.git
+$ cd statusgraph/
+$ kubectl apply -k config/default
+</code></pre><p>Helm is not supported. Feel free to contribute.</p>
+<h3 id="from-source">From Source</h3>
+<p>You can build statusgraph from source yourself. You need a working <a href="https://golang.org/doc/install">go 1.14 environment</a> and node environment.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ git clone git@github.com:moolen/statusgraph.git
+<span style="color:#75715e"># build standalone client/server</span>
+$ make client <span style="color:#75715e"># builds client bundle at ./client/dist</span>
+$ make binary <span style="color:#75715e"># builds server binary at ./bin/statusgraph</span>
+<span style="color:#75715e"># build docker image</span>
+$ make docker-build IMG<span style="color:#f92672">=</span>docker.io/foobar/statusgraph:dev
+</code></pre></div><h1 id="next-steps">Next steps</h1>
 <p>You may want to check out the the <a href="http://moolen.github.io/statusgraph/docs/usage/">Usage Examples</a> or <a href="http://moolen.github.io/statusgraph/docs/configuration/">Configuration</a>.</p>
 </article>
  
@@ -216,16 +248,15 @@ https://github.com/alex-shpak/hugo-book
   <nav id="TableOfContents">
   <ul>
     <li><a href="#what-is-statusgraph">What is Statusgraph?</a></li>
-  </ul>
-
-  <ul>
-    <li><a href="#prerequisites">Prerequisites</a>
+    <li><a href="#high-level-architecture">High-Level Architecture</a></li>
+    <li><a href="#installation">Installation</a>
       <ul>
-        <li><a href="#prometheus">Prometheus</a></li>
-        <li><a href="#alertmanager">Alertmanager</a></li>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#docker">Docker</a></li>
+        <li><a href="#kubernetes-kustomize--helm">Kubernetes, Kustomize &amp; Helm</a></li>
+        <li><a href="#from-source">From Source</a></li>
       </ul>
     </li>
-    <li><a href="#deployment">Deployment</a></li>
   </ul>
 </nav>
 

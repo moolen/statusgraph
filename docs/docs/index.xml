@@ -16,7 +16,9 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>http://moolen.github.io/statusgraph/docs/configuration/</guid>
-      <description>Configuration </description>
+      <description>Configuration This section is a reference for the command-line interface, usage of environment variable and config.yaml file. Statusgraph has a simple client-server architecture. The Server serves the SPA Frontend, stores the graph data on disk and proxies metrics request to prometheus.
+CLI The server serves the Webapp and is the API Server that stores the graph information and issues requests towards prometheus/alertmanager.
+Usage: statusgraph server [flags] Flags: --config string path to the config file which contains the server configuration (default &amp;quot;/etc/statusgraph/config.</description>
     </item>
     
     <item>
@@ -25,16 +27,9 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>http://moolen.github.io/statusgraph/docs/getting_started/</guid>
-      <description>Getting Started What is Statusgraph? Installation Prerequisites Prometheus Alertmanager Deployment Next steps You may want to check out the the Usage Examples or Configuration.</description>
-    </item>
-    
-    <item>
-      <title></title>
-      <link>http://moolen.github.io/statusgraph/docs/spec/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>http://moolen.github.io/statusgraph/docs/spec/</guid>
-      <description>Spec </description>
+      <description>Getting Started What is Statusgraph? Statusgraph is the status page for your distributed system. It lets you visualize components and dependencies of your system and indicates their status.
+Conceptually, you want to know if your service is &amp;ldquo;running&amp;rdquo;, i.e. it is in a binary state: red lamp vs. green lamp. This question is incredibly hard to answer. Statusgraph takes this approach:
+ define alerts in Prometheus. They tell us when a services is considered in a &amp;ldquo;red&amp;rdquo; state (service is dead / not available / has issues .</description>
     </item>
     
     <item>
@@ -43,7 +38,10 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>http://moolen.github.io/statusgraph/docs/usage/</guid>
-      <description>Usage examples </description>
+      <description>Usage examples Tutorial use-case: colorizing the nodes Let&amp;rsquo;s take a look at the following very simple graph:
+[frontend] --&amp;gt; [backend] Both services expose a metric http_request_latency_seconds:mean5m with labels app=frontend and app=backend.
+And let&amp;rsquo;s consider the following Alert rule as an real life™ example.
+groups: - name: Backend rules: - alert: HighRequestLatency expr: http_request_latency_seconds:mean5m{app=&amp;#34;backend&amp;#34;} &amp;gt; 0.5 for: 10m labels: severity: critical # &amp;lt;--- we only want to display alerts with severity=critical service_id: backend # &amp;lt;--- this is a node in our graph annotations: summary: High request latency The following mapping does this:</description>
     </item>
     
   </channel>
