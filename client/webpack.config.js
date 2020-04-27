@@ -106,6 +106,10 @@ module.exports = {
         to: 'index.html',
       },
       {
+        from: './assets/**/',
+        to: '',
+      },
+      {
         from: './**/*.js',
         to: '[name].js',
       },
