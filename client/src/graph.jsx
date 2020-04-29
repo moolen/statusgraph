@@ -413,7 +413,10 @@ class Graph extends DebugComponent {
   handleZoomStart = event => {};
 
   handleZoomToFit = () => {
-    const entities = d3.select(this.entities).node();
+    const entities = d3
+      .select(this.entities)
+      .select('.layer-node')
+      .node();
 
     if (!entities) {
       return;
