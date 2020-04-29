@@ -29,3 +29,6 @@ services:
   # a bunch of test server
   prom-tester:
     build: ../test/prom-tester
+
+  api-versions:
+    build: ../test/api-versions
