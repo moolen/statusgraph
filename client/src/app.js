@@ -1,63 +1,95 @@
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-import { BrowserRouter as Router, Route } from 'react-router-dom';
+import { connect } from 'react-redux';
+
+import { BrowserRouter as Router, Route, Redirect } from 'react-router-dom';
 
 import Graph from './graph.jsx';
+import Alerts from './alerts.jsx';
+import Metrics from './metrics.jsx';
+import Titlebar from './components/titlebar';
 import './app.scss';
+import { fetchGraphCollectionIfNeeded } from './store/actions/graph-collection';
+import { fetchAlertsIfNeeded } from './store/actions/alerts';
+import { fetchMetricsIfNeeded } from './store/actions/metrics.js';
+import { fetchServicesIfNeeded } from './store/actions/services.js';
+import { fetchMappingIfNeeded } from './store/actions/mapping.js';
 
 class App extends React.Component {
   state = {
     alerts: [],
     metrics: {},
     services: {},
+    mapping: {},
   };
 
-  constructor(props) {
-    super(props);
-    this.syncInterval = setInterval(this.sync.bind(this), 30000);
-    this.sync();
+  componentDidMount() {
+    const { dispatch } = this.props;
 
-    fetch(`${window.baseUrl}/api/config/mapping`)
-      .then(res => res.json())
-      .then(json => {
-        return this.setState({ mapping: json });
-      });
-  }
-
-  sync() {
-    fetch(`${window.baseUrl}/api/alerts`)
-      .then(res => res.json())
-      .then(json => {
-        return this.setState({ alerts: json });
-      });
-    fetch(`${window.baseUrl}/api/metrics`)
-      .then(res => res.json())
-      .then(json => {
-        return this.setState({ metrics: json });
-      });
-    fetch(`${window.baseUrl}/api/services`)
-      .then(res => res.json())
-      .then(json => {
-        return this.setState({ services: json });
-      });
+    dispatch(fetchGraphCollectionIfNeeded());
+    dispatch(fetchAlertsIfNeeded());
+    dispatch(fetchMetricsIfNeeded());
+    dispatch(fetchServicesIfNeeded());
+    dispatch(fetchMappingIfNeeded());
   }
 
   render() {
-    const { alerts, metrics, mapping, services } = this.state;
+    const {
+      alerts,
+      metrics,
+      mapping,
+      services,
+      graphCollection,
+      activeGraph,
+      dispatch,
+    } = this.props;
 
     return (
       <Router>
         <div>
+          <Route exact={true} path="/">
+            <Redirect from="/" to="/graph" />
+          </Route>
           <Route
             exact={true}
-            path="/"
+            path="/graph"
             render={() => (
-              <Graph
-                alerts={alerts}
-                metrics={metrics}
-                mapping={mapping}
-                services={services}
-              />
+              <div>
+                <Titlebar active="graph" />
+                <Graph
+                  alerts={alerts}
+                  metrics={metrics}
+                  mapping={mapping}
+                  services={services}
+                  graphCollection={graphCollection || []}
+                  activeGraph={activeGraph || {}}
+                  dispatch={dispatch}
+                />
+              </div>
+            )}
+          />
+          <Route
+            exact={true}
+            path="/alerts"
+            render={() => (
+              <div>
+                <Titlebar active="alerts" />
+                <Alerts alerts={alerts} mapping={mapping} dispatch={dispatch} />
+              </div>
+            )}
+          />
+          <Route
+            exact={true}
+            path="/metrics"
+            render={() => (
+              <div>
+                <Titlebar active="metrics" />
+                <Metrics
+                  metrics={metrics}
+                  alerts={alerts}
+                  mapping={mapping}
+                  dispatch={dispatch}
+                />
+              </div>
             )}
           />
         </div>
@@ -66,8 +98,17 @@ class App extends React.Component {
   }
 }
 
-if (typeof window !== 'undefined') {
-  window.onload = () => {
-    ReactDOM.render(<App />, document.getElementById('content'));
+function mapStateToProps(state) {
+  const { graphCollection, alerts, metrics, services, mapping } = state;
+
+  return {
+    graphCollection: graphCollection.items,
+    activeGraph: graphCollection.active,
+    alerts: alerts.items,
+    metrics: metrics.items,
+    services: services.items,
+    mapping: mapping.items,
   };
 }
+
+export default connect(mapStateToProps)(App);

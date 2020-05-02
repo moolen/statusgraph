@@ -6,7 +6,7 @@ module.exports = {
   mode: 'development',
   context: __dirname + '/src',
   entry: {
-    main: './app.js',
+    main: './main.js',
     css: './app.scss',
   },
 

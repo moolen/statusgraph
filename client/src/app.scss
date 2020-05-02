@@ -1,5 +1,5 @@
 html, body {
-  font-family: sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 12px;
   margin: 0px;
 }
@@ -15,10 +15,11 @@ button {
 .view-wrapper{
   height: auto;
   position: absolute;
-  top: 50px;
+  top: 72px;
   left: 0;
   right: 0;
   bottom: 0;
+  overflow: hidden;
 }
 
 .total-nodes {
