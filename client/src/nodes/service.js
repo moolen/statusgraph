@@ -73,6 +73,10 @@ class Service extends Rect {
   }
 
   static getConnectorPosition(node, edgeTarget, point) {
+    if (!node) {
+      return null;
+    }
+
     if (point == 'source') {
       return {
         x: node.bounds.x + Service.width + 27,

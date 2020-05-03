@@ -25,6 +25,10 @@ class Poly extends Rect {
   }
 
   static getConnectorPosition(node, edgeTarget, point) {
+    if (!node) {
+      return null;
+    }
+
     return {
       x: node.bounds.x + Poly.width / 2,
       y: node.bounds.y + Poly.height / 2,
@@ -56,7 +60,7 @@ class Poly extends Rect {
           d="M0,36l20,-36l52,0l20,36l-20,36l-52,0z"
         ></path>
         <foreignObject width={Poly.width - 4} height={Poly.height}>
-          <div className="node-text poly">
+          <div className={'node-text poly ' + this.props.highlight}>
             <span>{node.name}</span>
           </div>
         </foreignObject>

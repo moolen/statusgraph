@@ -1,0 +1,46 @@
+.dialog-wrapper{
+  transform: translateY(5000px);
+  &.enabled{
+    transform: none;
+    .dialog-stage{
+      opacity: 1;
+    }
+  }
+
+  .dialog-stage {
+    position: absolute;
+    top: 16px;
+    bottom: 0;
+    left: 50%;
+    width: 550px;
+    max-height: 95vh;
+    z-index: 10;
+    margin-left: -225px;
+    overflow: scroll;
+    padding: 0 16px;
+    background: #fff;
+    box-sizing: border-box;
+    box-shadow: 0 11px 15px -7px rgba(0,0,0,.2), 0 24px 38px 3px rgba(0,0,0,.14), 0 9px 46px 8px rgba(0,0,0,.12);
+    border-radius: 2px;
+    opacity: 0;
+    transition: opacity .25s cubic-bezier(.4,0,.2,1);
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .dialog-background{
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 6;
+    overflow: hidden;
+    background: rgba(0,0,0,.6);
+    transition: .35s cubic-bezier(.4,0,.2,1);
+    transition-property: opacity;
+    will-change: opacity;
+  }
+}

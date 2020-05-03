@@ -25,6 +25,10 @@ class Rect extends React.Component {
   }
 
   static getConnectorPosition(node, edgeTarget) {
+    if (!node) {
+      return null;
+    }
+
     return {
       x: node.bounds.x + Rect.width / 2,
       y: node.bounds.y + Rect.height / 2,
@@ -120,7 +124,7 @@ class Rect extends React.Component {
           ry="5"
         />
         <foreignObject width={Rect.width} height={Rect.height}>
-          <div className="node-text rect">
+          <div className={'node-text rect ' + this.props.highlight}>
             <span>{node.name}</span>
           </div>
         </foreignObject>

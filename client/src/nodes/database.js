@@ -25,6 +25,10 @@ export class Database extends Rect {
   }
 
   static getConnectorPosition(node, edgeTarget) {
+    if (!node) {
+      return null;
+    }
+
     return {
       x: node.bounds.x + Database.width / 2,
       y: node.bounds.y + Database.height / 2,

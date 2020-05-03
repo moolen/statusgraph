@@ -13,6 +13,7 @@ export class NodeEditor extends React.Component {
 
     this.state = {
       labelInput: '',
+      showConnectors: false,
       editValues: {
         id: node.id || '',
         name: node.name || '',
@@ -187,6 +188,16 @@ export class NodeEditor extends React.Component {
     this.setState({ editValues: ev });
   };
 
+  toggleConnectors = () => {
+    const { updateParent } = this.props;
+
+    this.setState({ showConnectors: !this.state.showConnectors }, () => {
+      if (updateParent) {
+        updateParent();
+      }
+    });
+  };
+
   onClickAddConnector = () => {
     const ev = this.state.editValues;
 
@@ -220,9 +231,7 @@ export class NodeEditor extends React.Component {
     });
 
     return (
-      <div
-        className={'form node-editor ' + (this.props.enabled ? 'enabled' : '')}
-      >
+      <div className={'form node-editor'}>
         {/* <div className="form-row">
           <label>ID</label>
           <input
@@ -234,31 +243,34 @@ export class NodeEditor extends React.Component {
             value={ev.id}
           />
         </div> */}
-        <div className="form-row">
-          <label>Name</label>
-          <input
-            type="text"
-            ref={input => {
-              this.nameInput = input;
-            }}
-            onKeyDown={this.handleInputKeydown.bind(this)}
-            onChange={this.handleTextChange.bind(this)}
-            name="name"
-            value={ev.name}
-          />
-        </div>
-        {ev.type == 'service' && (
+        <h3>Node Editor</h3>
+        <div className="form-group">
           <div className="form-row">
-            <label>Namespace</label>
+            <label>Name</label>
             <input
               type="text"
+              ref={input => {
+                this.nameInput = input;
+              }}
               onKeyDown={this.handleInputKeydown.bind(this)}
               onChange={this.handleTextChange.bind(this)}
-              name="namespace"
-              value={ev.namespace}
+              name="name"
+              value={ev.name}
             />
           </div>
-        )}
+          {ev.type == 'service' && (
+            <div className="form-row">
+              <label>Namespace</label>
+              <input
+                type="text"
+                onKeyDown={this.handleInputKeydown.bind(this)}
+                onChange={this.handleTextChange.bind(this)}
+                name="namespace"
+                value={ev.namespace}
+              />
+            </div>
+          )}
+        </div>
         <div className="form-row select-row">
           <label>Type</label>
           <Select
@@ -273,12 +285,25 @@ export class NodeEditor extends React.Component {
         {ev.type == 'service' && (
           <div className="service-form-wrapper">
             <div className="connector-wrapper">
-              <div className="connector-list">
+              <div className="connector-button" onClick={this.toggleConnectors}>
+                <div>Connectors ({ev.connector.length})</div>
+                <i className="material-icons">
+                  {this.state.showConnectors
+                    ? 'keyboard_arrow_down'
+                    : 'keyboard_arrow_right'}
+                </i>
+              </div>
+              <div
+                className={
+                  'connector-list ' +
+                  (this.state.showConnectors ? 'visible' : 'hidden')
+                }
+              >
                 {ev.connector.map((conn, i) => {
                   return (
                     <div key={conn.id} className="form-row port-row">
                       <label>Connector {i + 1}</label>
-                      <div className="port-input-wrap">
+                      <div className="port-input-wrap form-row">
                         <label>Label</label>
                         <input
                           type="text"
@@ -290,7 +315,7 @@ export class NodeEditor extends React.Component {
                           value={conn.label}
                         />
                       </div>
-                      <div className="port-input-wrap">
+                      <div className="port-input-wrap form-row">
                         <label>Description</label>
                         <input
                           type="text"
@@ -305,13 +330,13 @@ export class NodeEditor extends React.Component {
                     </div>
                   );
                 })}
+                <button
+                  className="btn add-connector primary"
+                  onClick={this.onClickAddConnector}
+                >
+                  add connector
+                </button>
               </div>
-              <button
-                className="btn add-connector"
-                onClick={this.onClickAddConnector}
-              >
-                add connector
-              </button>
             </div>
             <div className="label-wrapper">
               <div className="form-row select-row">
@@ -348,7 +373,7 @@ export class NodeEditor extends React.Component {
           </div>
         )}
         <div className="form-row button-row">
-          <button className="btn primary" onClick={this.onSubmit.bind(this)}>
+          <button className="btn light" onClick={this.onSubmit.bind(this)}>
             Save
           </button>
           <button className="btn light" onClick={this.onAbort.bind(this)}>

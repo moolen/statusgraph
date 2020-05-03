@@ -98,6 +98,10 @@
 
   .service-port-wrapper{
     border-top: 1px solid #e0e0e0;
+    * {
+      font-weight: 300;
+    }
+
     .service-protocol-wrapper{
       padding: 5px 15px;
       border-bottom: 1px solid #e0e0e0;
@@ -138,7 +142,7 @@
             font-style: normal;
             font-weight: 500;
             line-height: 16px;
-            background-color: #7379fc;
+            background-color: $f3;
           }
           .protocol-title{
             box-sizing: border-box;

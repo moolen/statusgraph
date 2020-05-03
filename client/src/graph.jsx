@@ -2,19 +2,29 @@ import * as d3 from 'd3';
 import ReactDOM from 'react-dom';
 import * as React from 'react';
 import './graph.scss';
+import Dialog from './components/dialog';
+import AddStage from './components/stage-add';
+import EditStage from './components/stage-edit';
+import BtnTooltip from './components/btn-tooltip';
+import Select from 'react-select';
+
 import DebugComponent from './lib/debug-component';
 import {
   Rect,
   Cluster,
   Pointer,
   Edge,
-  Titlebar,
   NodeEditor,
   Tooltip,
   GraphUtils,
 } from './internal';
 
 import { RenderLayerMap, LAYER_EDGE } from './config';
+import {
+  updateActiveGraphAction,
+  createGraph,
+  saveActiveGraph,
+} from './store/actions/graph-collection';
 
 class Graph extends DebugComponent {
   static defaultProps = {
@@ -27,14 +37,10 @@ class Graph extends DebugComponent {
   state = {
     hoveredNode: null,
     draggingEdge: null,
-    writeLocked: true,
+    writeLocked: false,
+    modalContent: null,
     editorNode: null,
-    graph: {
-      id: '',
-      name: '',
-      edges: [],
-      nodes: [],
-    },
+    selectedStage: null,
   };
 
   renderNodesTimeout = null;
@@ -78,9 +84,12 @@ class Graph extends DebugComponent {
 
     if (
       this.props.alerts != prevProps.alerts ||
-      this.props.metrics != prevProps.metrics
+      this.props.metrics != prevProps.metrics ||
+      this.props.graphCollection != prevProps.graphCollection ||
+      this.props.activeGraph != prevProps.activeGraph
     ) {
       this.renderNodes();
+      this.renderEdges();
     }
   }
 
@@ -145,6 +154,7 @@ class Graph extends DebugComponent {
         selectedEdge: null,
         draggingEdge: null,
       });
+      this.clearModal();
     }
 
     if (['Backspace', 'Delete'].includes(e.key) && !this.state.editorNode) {
@@ -184,7 +194,10 @@ class Graph extends DebugComponent {
   }
 
   onUpdateNodePosition = (nodeData, newNodePos, pointerPos, shift) => {
-    const node = GraphUtils.getNodeByID(this.state.graph.nodes, nodeData.id);
+    const node = GraphUtils.getNodeByID(
+      this.props.activeGraph.nodes,
+      nodeData.id
+    );
     const { draggingEdge, writeLocked } = this.state;
 
     if (writeLocked) {
@@ -208,14 +221,12 @@ class Graph extends DebugComponent {
       // node/edges in the graph
       if (node.type.hasOwnProperty('onUpdateNodeHook')) {
         const g = node.type.onUpdateNodeHook(
-          this.state.graph,
+          this.props.activeGraph,
           nodeData,
           newNodePos
         );
 
-        this.setState({
-          graph: g,
-        });
+        this.props.dispatch(updateActiveGraphAction(g));
       }
 
       Object.assign(node.bounds, { x: newNodePos.x, y: newNodePos.y });
@@ -267,7 +278,8 @@ class Graph extends DebugComponent {
   };
 
   onNodeDragEnd = node => {
-    const { graph, draggingEdge, hoveredNode } = this.state;
+    const { activeGraph } = this.props;
+    const { draggingEdge, hoveredNode } = this.state;
 
     const oldDragging = Object.assign({}, draggingEdge);
 
@@ -300,13 +312,13 @@ class Graph extends DebugComponent {
 
         // check if edge already exists
         if (!this.edgeExists(draggingEdge)) {
-          graph.edges = [draggingEdge, ...graph.edges];
+          activeGraph.edges = [draggingEdge, ...activeGraph.edges];
         }
       }
 
+      this.props.dispatch(updateActiveGraphAction(activeGraph));
       this.setState({
         draggingEdge: null,
-        graph,
       });
       this.removeDraggingEdgeContainer(oldDragging);
       this.renderEdges();
@@ -318,10 +330,10 @@ class Graph extends DebugComponent {
   };
 
   edgeExists(e) {
-    const { graph } = this.state;
+    const { activeGraph } = this.props;
 
     return (
-      graph.edges.find(edge => {
+      activeGraph.edges.find(edge => {
         return (
           edge.source.id == e.source.id &&
           edge.target.id == e.target.id &&
@@ -339,6 +351,14 @@ class Graph extends DebugComponent {
 
     this.setState({
       editorNode: node,
+      modalContent: (
+        <NodeEditor
+          onNodeEditChange={this.onNodeEditChange}
+          onNodeEditExit={this.onNodeEditExit}
+          node={node}
+          nodes={this.props.activeGraph.nodes}
+        />
+      ),
     });
   };
 
@@ -352,10 +372,10 @@ class Graph extends DebugComponent {
   }
 
   createNode(node) {
-    const { graph } = this.state;
+    const { activeGraph } = this.props;
 
-    graph.nodes = [node, ...graph.nodes];
-    this.setState({ graph });
+    activeGraph.nodes = [node, ...activeGraph.nodes];
+    this.props.dispatch(updateActiveGraphAction(activeGraph));
     this.renderNodes();
   }
 
@@ -426,10 +446,10 @@ class Graph extends DebugComponent {
 
     if (entities.children.length == 0) {
       viewBBox = {
-        x: this.background.width / 2,
-        y: this.background.height / 2,
-        width: window.innerWidth,
-        height: window.innerHeight,
+        x: this.background.width / 4,
+        y: this.background.height / 4,
+        width: 500,
+        height: 80,
       };
     }
 
@@ -499,12 +519,16 @@ class Graph extends DebugComponent {
   }
 
   renderNodes = () => {
-    if (!this.entities) {
+    if (
+      !this.entities ||
+      !this.props.activeGraph ||
+      !this.props.activeGraph.nodes
+    ) {
       return;
     }
 
     // we must render the cluster nodes AFTER all other
-    this.state.graph.nodes
+    this.props.activeGraph.nodes
       .sort(n => (n.type == Cluster ? 1 : -1))
       .sort((a, b) => {
         if (a.type == Cluster && b.type == Cluster) {
@@ -522,10 +546,10 @@ class Graph extends DebugComponent {
   };
 
   renderEdges = () => {
-    const { edges } = this.state.graph;
+    const { edges } = this.props.activeGraph;
     const { draggingEdge } = this.state;
 
-    if (!this.entities) {
+    if (!this.entities || !edges) {
       return;
     }
 
@@ -674,7 +698,7 @@ class Graph extends DebugComponent {
       return;
     }
 
-    const { graph } = this.state;
+    const { activeGraph } = this.props;
 
     // remove node from dom
     const containerId = GraphUtils.getNodeContainerById(id);
@@ -687,13 +711,13 @@ class Graph extends DebugComponent {
     }
 
     // remove edges
-    graph.edges
+    activeGraph.edges
       .filter(edge => edge.source.id == id || edge.target.id == id)
       .forEach(edge => this.removeEdgeByID(edge.id));
 
     nodeContainer.remove();
 
-    graph.nodes = graph.nodes.map(node => {
+    activeGraph.nodes = activeGraph.nodes.map(node => {
       if (node.children && node.children.includes(id)) {
         node.children = node.children.filter(cid => cid != id);
       }
@@ -702,8 +726,8 @@ class Graph extends DebugComponent {
     });
 
     // update state
-    graph.nodes = [...graph.nodes.filter(node => node.id != id)];
-    this.setState({ graph });
+    activeGraph.nodes = [...activeGraph.nodes.filter(node => node.id != id)];
+    this.props.dispatch(updateActiveGraphAction(activeGraph));
   }
 
   removeEdgeByID(id) {
@@ -711,7 +735,7 @@ class Graph extends DebugComponent {
       return;
     }
 
-    const edge = GraphUtils.getEdgeByID(this.state.graph.edges, id);
+    const edge = GraphUtils.getEdgeByID(this.props.activeGraph.edges, id);
     const eci = this.getEdgeContainerID(edge);
     const container = document.getElementById(eci);
 
@@ -722,10 +746,10 @@ class Graph extends DebugComponent {
     }
 
     container.remove();
-    const { graph } = this.state;
+    const { activeGraph } = this.props;
 
-    graph.edges = [...graph.edges.filter(edge => edge.id != id)];
-    this.setState({ graph });
+    activeGraph.edges = [...activeGraph.edges.filter(edge => edge.id != id)];
+    this.props.dispatch(updateActiveGraphAction(activeGraph));
   }
 
   syncRenderEdge(edge) {
@@ -761,11 +785,11 @@ class Graph extends DebugComponent {
         this.state.hoveredNode.id == edge.source.id)
     ) {
       const sNode = GraphUtils.getNodeByID(
-        this.state.graph.nodes,
+        this.props.activeGraph.nodes,
         edge.source.id
       );
       const dNode = GraphUtils.getNodeByID(
-        this.state.graph.nodes,
+        this.props.activeGraph.nodes,
         edge.target.id
       );
 
@@ -797,13 +821,23 @@ class Graph extends DebugComponent {
 
     if (ctr && ctr.hasOwnProperty('afterRenderEdge')) {
       const node = GraphUtils.getNodeByID(
-        this.state.graph.nodes,
+        this.props.activeGraph.nodes,
         edge.target.id
       );
 
       ctr.afterRenderEdge(node, edge.target);
     }
   }
+
+  onSaveStage = stage => {
+    this.props.dispatch(saveActiveGraph());
+  };
+  onUpdateStage = stage => {
+    console.log(`update stage`);
+  };
+  onDeleteStage = stage => {
+    console.log(`delete stage`);
+  };
 
   onClickEdge = edge => {
     this.setState({ selectedEdge: edge.id });
@@ -818,7 +852,11 @@ class Graph extends DebugComponent {
   }
 
   getEdgeCoords(point, edgeTarget) {
-    const node = GraphUtils.getNodeByID(this.state.graph.nodes, edgeTarget.id);
+    const node = GraphUtils.getNodeByID(
+      this.props.activeGraph.nodes || [],
+      edgeTarget.id
+    );
+
     const edgeTargetID = edgeTarget.type.getEdgeTargetID(edgeTarget);
     const coords = edgeTarget.type.getConnectorPosition(
       node,
@@ -873,7 +911,7 @@ class Graph extends DebugComponent {
   };
 
   onNodeEditChange = (oldNode, node) => {
-    const graph = this.state.graph;
+    const graph = this.props.activeGraph;
     const i = GraphUtils.getNodeIndexById(graph.nodes, node.id);
 
     graph.nodes[i] = node;
@@ -905,12 +943,13 @@ class Graph extends DebugComponent {
       nodeContainer.remove();
     }
 
+    this.props.dispatch(updateActiveGraphAction(graph));
     this.setState({
-      graph: graph,
       editorNode: null,
       selectedNode: null,
     });
 
+    this.clearModal();
     this.renderNodes();
     this.renderEdges();
   };
@@ -919,27 +958,49 @@ class Graph extends DebugComponent {
     this.setState({
       editorNode: null,
     });
+    this.clearModal();
     this.renderNodes();
   };
 
-  onChangeStage = (name, graph) => {
-    this.setState(
-      {
-        graph: graph,
-      },
-      () => {
-        this.clearStage();
-        this.renderNodes();
-        this.renderEdges();
-        setTimeout(() => {
-          this.handleZoomToFit();
-        }, 50);
-      }
-    );
+  onChangeStage = opt => {
+    const g = this.props.graphCollection.find(g => g.name == opt.value);
+
+    if (!g) {
+      console.warn(`graph not found`, opt);
+
+      return;
+    }
+
+    this.clearStage();
+    this.props.dispatch(updateActiveGraphAction(g));
+
+    setTimeout(() => {
+      this.handleZoomToFit();
+    }, 50);
   };
 
-  onChangeWriteLock = wl => {
-    this.setState({ writeLocked: wl });
+  toggleWriteLock = () => {
+    const { writeLocked } = this.state;
+
+    this.setState({ writeLocked: !writeLocked });
+  };
+
+  clearModal = () => {
+    this.setState({ modalContent: null });
+  };
+
+  onAddStage = stage => {
+    this.clearStage();
+    this.clearModal();
+    this.props.dispatch(createGraph(stage));
+  };
+
+  toggleAddStage = () => {
+    this.setState({
+      modalContent: (
+        <AddStage onAbort={this.clearModal} onAdd={this.onAddStage} />
+      ),
+    });
   };
 
   clearStage() {
@@ -947,8 +1008,9 @@ class Graph extends DebugComponent {
       cancelAnimationFrame(this.nodeTimeouts[k])
     );
     Object.keys(this.edgeTimeouts).forEach(k =>
-      cancelAnimationFrame(this.nodeTimeouts[k])
+      cancelAnimationFrame(this.edgeTimeouts[k])
     );
+
     Object.keys(this.renderLayer).forEach(layer => {
       for (let i = this.renderLayer[layer].children.length - 1; i >= 0; --i) {
         this.renderLayer[layer].children[i].remove();
@@ -957,21 +1019,10 @@ class Graph extends DebugComponent {
   }
 
   render() {
+    const { graphCollection, activeGraph } = this.props;
+
     return (
       <div className="app">
-        <Titlebar
-          writeLocked={this.state.writeLocked}
-          onChange={this.onChangeStage}
-          onChangeWriteLock={this.onChangeWriteLock}
-          graph={this.state.graph}
-        />
-        <NodeEditor
-          onNodeEditChange={this.onNodeEditChange}
-          onNodeEditExit={this.onNodeEditExit}
-          enabled={!!this.state.editorNode}
-          node={this.state.editorNode}
-          nodes={this.state.graph.nodes}
-        />
         <div className="view-wrapper" ref={this.viewWrapper}>
           <svg className="graph">
             <defs>
@@ -1020,10 +1071,97 @@ class Graph extends DebugComponent {
               </g>
             </g>
           </svg>
+
+          <Dialog enabled={this.state.modalContent}>
+            {this.state.modalContent}
+          </Dialog>
+          <div className="fab-controls">
+            <div className="fab-menu">
+              <ul>
+                <li>
+                  <button className="fab-button accent">
+                    <i className="material-icons">edit</i>
+                    <BtnTooltip text="edit dashboard settings"></BtnTooltip>
+                  </button>
+                </li>
+                <li>
+                  <button className="fab-button accent">
+                    <i className="material-icons">delete</i>
+                    <BtnTooltip text="delete this dashboard"></BtnTooltip>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="fab-button accent"
+                    onClick={this.onSaveStage}
+                  >
+                    <i className="material-icons">save</i>
+                    <BtnTooltip text="save dashboard"></BtnTooltip>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className={
+                      'fab-button fab-main ' +
+                      (this.state.writeLocked ? 'primary' : 'accent')
+                    }
+                    onClick={this.toggleWriteLock}
+                  >
+                    <i className="material-icons">
+                      {this.state.writeLocked ? 'lock' : 'lock_open'}
+                    </i>
+                    <BtnTooltip
+                      text={
+                        this.state.writeLocked
+                          ? 'unlock editing'
+                          : 'lock editing'
+                      }
+                    ></BtnTooltip>
+                  </button>
+                </li>
+              </ul>
+            </div>
+            <button className="fab-button accent" onClick={this.toggleAddStage}>
+              <i className="material-icons">add</i>
+            </button>
+          </div>
+          <div className="graph-controls">
+            <div className="stage-wrapper">
+              <div className="select-wrapper">
+                <Select
+                  className="stage-selector"
+                  value={{ value: activeGraph.name, label: activeGraph.name }}
+                  onChange={this.onChangeStage}
+                  styles={{
+                    control: (provided, state) => ({
+                      ...provided,
+                      border: 'none',
+                      padding: '0 0 0 4px',
+                      borderRadius: '8px',
+                      boxShadow: 'none',
+                      '&:hover': {
+                        border: 'none',
+                      },
+                    }),
+                  }}
+                  options={graphCollection.map(stage => {
+                    return { value: stage.name, label: stage.name };
+                  })}
+                ></Select>
+              </div>
+            </div>
+            <div className="actions">
+              <EditStage
+                onUpdate={this.onUpdateStage.bind(this)}
+                onDelete={this.onDeleteStage.bind(this)}
+                stage={activeGraph}
+              />
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 }
 
-module.exports = Graph;
+export default Graph;

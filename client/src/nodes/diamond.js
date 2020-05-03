@@ -25,6 +25,10 @@ export class Diamond extends Rect {
   }
 
   static getConnectorPosition(node, edgeTarget) {
+    if (!node) {
+      return null;
+    }
+
     return {
       x: node.bounds.x + Diamond.width / 2,
       y: node.bounds.y + Diamond.height / 2,
@@ -63,7 +67,7 @@ export class Diamond extends Rect {
         </g>
 
         <foreignObject width={Diamond.width} height={Diamond.height}>
-          <div className="node-text diamond">
+          <div className={'node-text diamond ' + this.props.highlight}>
             <span>{node.name}</span>
           </div>
         </foreignObject>

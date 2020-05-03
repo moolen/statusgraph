@@ -1,0 +1,13 @@
+.btn-tooltip{
+  opacity: 0;
+  position: absolute;
+  right: 52px;
+  white-space: nowrap;
+  top: 12px;
+  background: #616161;
+  padding: 4px 8px;
+  color: #fff;
+  display: block;
+  border-radius: 2px;
+  transition: opacity .25s cubic-bezier(.4,0,.2,1);
+}

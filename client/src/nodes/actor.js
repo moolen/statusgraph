@@ -25,6 +25,10 @@ export class Actor extends Rect {
   }
 
   static getConnectorPosition(node, edgeTarget) {
+    if (!node) {
+      return null;
+    }
+
     return {
       x: node.bounds.x + Actor.width / 2,
       y: node.bounds.y + Actor.height / 2,

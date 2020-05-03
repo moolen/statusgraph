@@ -69,6 +69,10 @@ export class Cluster extends React.Component {
   }
 
   static getConnectorPosition(node, edgeTarget) {
+    if (!node) {
+      return null;
+    }
+
     const bounds = Cluster.getClusterBounds(node);
 
     return {
