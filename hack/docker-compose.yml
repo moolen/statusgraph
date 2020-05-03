@@ -31,4 +31,6 @@ services:
     build: ../test/prom-tester
 
   api-versions:
-    build: ../test/api-versions
+    build: ../test/api-version
+    ports:
+      - 3003:3000

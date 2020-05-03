@@ -32,6 +32,7 @@ func New(cfg *config.ServerConfig, staticDir, dataDir string) *Server {
 	router.HandleFunc("/api/alerts", FetchAlerts(cfg))
 	router.HandleFunc("/api/metrics", FetchMetrics(cfg))
 	router.HandleFunc("/api/services", FetchAvailableServices(cfg))
+	router.HandleFunc("/api/versions", FetchVersions(cfg))
 
 	router.HandleFunc("/api/graph", GetGraph(s)).Methods("GET")
 	router.PathPrefix("/api/graph/{id}").HandlerFunc(SaveStage(s)).Methods("POST")

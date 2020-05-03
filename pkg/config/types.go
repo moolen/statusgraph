@@ -10,6 +10,7 @@ type ServerConfig struct {
 type UpstreamType struct {
 	Prometheus   UpstreamConfig `yaml:"prometheus" json:"prometheus"`
 	Alertmanager UpstreamConfig `yaml:"alertmanager" json:"alertmanager"`
+	Versions     UpstreamConfig `yaml:"versions" json:"versions"`
 }
 
 // UpstreamConfig ..
@@ -28,10 +29,6 @@ type AlertMappingType struct {
 	LabelSelector      []LabelSelector `yaml:"label_selector" json:"label_selector"`
 	ServiceLabels      []string        `yaml:"service_labels" json:"service_labels"`
 	ServiceAnnotations []string        `yaml:"service_annotations" json:"service_annotations"`
-}
-
-type AlertMapper struct {
-	Label string `json:"label"`
 }
 
 // LabelSelector ..
