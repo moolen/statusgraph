@@ -37,7 +37,7 @@ class Graph extends DebugComponent {
   state = {
     hoveredNode: null,
     draggingEdge: null,
-    writeLocked: false,
+    writeLocked: true,
     modalContent: null,
     editorNode: null,
     selectedStage: null,
@@ -829,8 +829,23 @@ class Graph extends DebugComponent {
     }
   }
 
+  showSnackbar = text => {
+    clearTimeout(this.snackbarTimeout);
+    this.snackbarTimeout = setTimeout(() => {
+      this.setState({
+        snackbarVisible: false,
+      });
+    }, 1800);
+
+    this.setState({
+      snackbarVisible: true,
+      snackbarText: text,
+    });
+  };
   onSaveStage = stage => {
-    this.props.dispatch(saveActiveGraph());
+    this.props.dispatch(saveActiveGraph()).then(() => {
+      this.showSnackbar('saved');
+    });
   };
   onUpdateStage = stage => {
     console.log(`update stage`);
@@ -1075,21 +1090,28 @@ class Graph extends DebugComponent {
           <Dialog enabled={this.state.modalContent}>
             {this.state.modalContent}
           </Dialog>
+          <div
+            className={
+              'snackbar ' + (this.state.snackbarVisible ? 'visible' : '')
+            }
+          >
+            <div className="text">{this.state.snackbarText}</div>
+          </div>
           <div className="fab-controls">
             <div className="fab-menu">
               <ul>
-                <li>
+                {/* <li>
                   <button className="fab-button accent">
                     <i className="material-icons">edit</i>
                     <BtnTooltip text="edit dashboard settings"></BtnTooltip>
                   </button>
-                </li>
-                <li>
+                </li> */}
+                {/* <li>
                   <button className="fab-button accent">
                     <i className="material-icons">delete</i>
                     <BtnTooltip text="delete this dashboard"></BtnTooltip>
                   </button>
-                </li>
+                </li> */}
                 <li>
                   <button
                     className="fab-button accent"
@@ -1121,8 +1143,12 @@ class Graph extends DebugComponent {
                 </li>
               </ul>
             </div>
-            <button className="fab-button accent" onClick={this.toggleAddStage}>
+            <button
+              className="fab-main fab-button accent"
+              onClick={this.toggleAddStage}
+            >
               <i className="material-icons">add</i>
+              <BtnTooltip text={'add stage'}></BtnTooltip>
             </button>
           </div>
           <div className="graph-controls">

@@ -136,6 +136,25 @@
   }
 }
 
+.snackbar{
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 300px;
+  background: #323232;
+  margin-left: -150px;
+  padding: 14px 24px;
+  color: #fff;
+  font-size: 14px;
+  transform: translateY(100px);
+  transition: .35s cubic-bezier(.4,0,.2,1);
+
+  &.visible{
+    display: block;
+    transform: translateY(0);
+  }
+}
+
 .modal-background{
   position: fixed;
   top: 0;
@@ -222,6 +241,19 @@
           }
         }
       }
+    }
+  }
+}
+
+.fab-main{
+  position: relative;
+  .btn-tooltip{
+    right: 62px;
+    top: 16px;
+  }
+  &:hover{
+    .btn-tooltip{
+      opacity: 1;
     }
   }
 }

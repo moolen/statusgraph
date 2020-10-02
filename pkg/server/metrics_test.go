@@ -40,8 +40,8 @@ func TestFetchMetrics(t *testing.T) {
 	}
 	expected := MetricResponse{
 		Metrics: map[string]map[string][]TSValue{
-			"Foobar": map[string][]TSValue{
-				"foo": []TSValue{
+			"Foobar": {
+				"foo": {
 					{
 						Date:  "52181-04-15T08:46:40Z",
 						Value: 0,
