@@ -142,7 +142,7 @@ func TestDeleteGraph(t *testing.T) {
 			name: "9381acab-2373-4766-b51e-0005dfe30000",
 			req:  httptest.NewRequest("GET", "http://foo.example", nil),
 			initialData: map[string]store.Stage{
-				"9381acab-2373-4766-b51e-0005dfe30000": store.Stage{
+				"9381acab-2373-4766-b51e-0005dfe30000": {
 					Name:  "fart",
 					ID:    uuid.MustParse("9381acab-2373-4766-b51e-0005dfe30000"),
 					Edges: make([]store.Edge, 0),
@@ -159,7 +159,7 @@ func TestDeleteGraph(t *testing.T) {
 			name: "NONEXISTENT",
 			req:  httptest.NewRequest("GET", "http://foo.example", nil),
 			initialData: map[string]store.Stage{
-				"9381acab-2373-4766-b51e-0005dfe30000": store.Stage{
+				"9381acab-2373-4766-b51e-0005dfe30000": {
 					Name:  "fart",
 					ID:    uuid.MustParse("9381acab-2373-4766-b51e-0005dfe30000"),
 					Edges: make([]store.Edge, 0),

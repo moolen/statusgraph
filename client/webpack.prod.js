@@ -7,7 +7,7 @@ module.exports = {
   devtool: 'source-map',
   context: __dirname + '/src',
   entry: {
-    main: './app.js',
+    main: './main.js',
     css: './app.scss',
   },
 
@@ -86,6 +86,14 @@ module.exports = {
       'process.env.NODE_ENV': JSON.stringify('production'),
     }),
     new CopyWebpackPlugin([
+      {
+        from: './assets/**/',
+        to: '',
+      },
+      {
+        from: './**/*.js',
+        to: '[name].js',
+      },
       {
         from: './**/index.html',
         to: 'index.html',

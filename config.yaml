@@ -3,20 +3,26 @@ upstream:
     url: http://localhost:9090
   alertmanager:
     url: http://localhost:9093
+  versions:
+    url: http://localhost:3003/gimme
 
+# Two kinds of information are key for the service dashboard:
+# (I.)  Which Services do exist?
+#       - we extract that information directly from prometheus using a label
+#       - we infer that information from alertmanager (at alert-time, since labels/annotations may be computed)
+# (II.) Is the service healthy?
+#       -
 mapping:
-  # this defines how we select alerts to display
-  # use a `labelSelector` to filter
-  # and `map` to specify the lookup key in the alert struct
   alerts:
+    # filter alerts by label before we further process alerts
     label_selector:
       - severity: "critical"
       - severity: "warning"
         important: "true"
 
-    # red & green lamp indicator
-    # Use this if your alerts use a specific label for a service (e.g. app=frontend / app=backend ...)
-    # this tells statusgraph to map alerts to nodes using the following labels/annotations
+    # (I.) red & green lamp indicator
+    # Use this if your *alerts* use a specific label for a service (e.g. app=frontend / app=backend ...)
+    # This tells statusgraph to map alerts to nodes using the following labels/annotations
     service_labels:
       - "service_id"
     service_annotations:
@@ -24,14 +30,15 @@ mapping:
 
   metrics:
 
-    # green lamp indicator!
-    # this helps statusgraph to find all existing services by fetching the label values
+    # (I.) green lamp indicator!
+    # This helps statusgraph to find all existing services by fetching the label values from prometheus
     # reference: https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values
     service_labels:
       - 'service_id'
 
     queries:
-      # just as an example
+      # send queries to prometheus which will be displayed
+      # next to a node
       - name: cpu wait
-        query: sum(rate(node_pressure_cpu_waiting_seconds_total[1m])) by (service_id) * 100
+        query: sum(service:availability:1h) by (service_id) * 100
         service_label: service_id
