@@ -5,7 +5,7 @@ import {
   RECEIVE_CREATE_GRAPH,
   UPDATE_ACTIVE_GRAPH,
 } from '../actions/graph-collection';
-import { ExampleGraph } from '../../internal';
+import { GraphUtils, ExampleGraph } from '../../internal';
 
 function graphItems(
   state = {
@@ -24,8 +24,8 @@ function graphItems(
     case RECEIVE_GRAPH_COLLECTION:
       return Object.assign({}, state, {
         isFetching: false,
-        items: action.items || [ExampleGraph],
-        active: action.items[0] || ExampleGraph,
+        items: action.items || [GraphUtils.deserializeGraph(ExampleGraph)],
+        active: action.items[0] || GraphUtils.deserializeGraph(ExampleGraph),
         lastUpdated: action.receivedAt,
       });
     default:

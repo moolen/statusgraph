@@ -39,6 +39,6 @@ mapping:
     queries:
       # send queries to prometheus which will be displayed
       # next to a node
-      - name: cpu wait
+      - name: availability:1h
         query: sum(service:availability:1h) by (service_id) * 100
         service_label: service_id
