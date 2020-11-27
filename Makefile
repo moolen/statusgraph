@@ -1,4 +1,5 @@
 IMAGE_REPO = quay.io/moolen/statusgraph
+version ?= dev
 IMG ?= ${IMAGE_REPO}:${version}
 HUGO=bin/hugo
 

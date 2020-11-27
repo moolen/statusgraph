@@ -625,7 +625,7 @@ class Graph extends DebugComponent {
       return '';
     }
 
-    if (!mapping) {
+    if (!mapping || !alerts || !services) {
       return '';
     }
 

@@ -115,6 +115,7 @@ export class NodeEditor extends React.Component {
     }
   }
 
+  // TODO: this is buggy when clicking with mouse
   handleChildrenChange = children => {
     const v = this.state.editValues;
 
